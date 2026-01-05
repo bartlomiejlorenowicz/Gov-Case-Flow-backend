@@ -7,7 +7,6 @@ import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
 import com.caseservice.repository.CaseRepository;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
