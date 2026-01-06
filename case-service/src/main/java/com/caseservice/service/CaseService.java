@@ -4,12 +4,14 @@ import com.caseservice.domain.CaseEntity;
 import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseStatusTransitions;
 import com.caseservice.dto.request.CreateCaseRequest;
+import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
 import com.caseservice.repository.CaseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -50,6 +52,22 @@ public class CaseService {
         caseRepository.save(caseEntity);
     }
 
+    public List<CaseEntityDto> getAllCases() {
+        return caseRepository.findAll()
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    private CaseEntityDto mapToDto(CaseEntity caseEntity) {
+        return CaseEntityDto.builder()
+                .id(caseEntity.getId())
+                .caseNumber(caseEntity.getCaseNumber())
+                .status(caseEntity.getStatus())
+                .applicantPesel(caseEntity.getApplicantPesel())
+                .createdAt(caseEntity.getCreatedAt())
+                .build();
+    }
     private CaseResponse map(CaseEntity caseEntity) {
         return new CaseResponse(
                 caseEntity.getId(),
