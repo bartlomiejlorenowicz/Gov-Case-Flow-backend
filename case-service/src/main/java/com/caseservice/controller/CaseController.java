@@ -27,19 +27,19 @@ public class CaseController {
     }
 
     @PatchMapping("/{caseId}/status")
-    public ResponseEntity<Void> changeCaseStatus(@PathVariable UUID caseId, @RequestBody ChangeCaseStatusRequest  changeCaseStatusRequest) {
+    public ResponseEntity<Void> changeCaseStatus(@PathVariable UUID caseId, @Valid @RequestBody ChangeCaseStatusRequest  changeCaseStatusRequest) {
         caseService.changeStatus(caseId, changeCaseStatusRequest.newStatus());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public List<CaseEntityDto> getAll() {
-        return caseService.getAll();
+    public ResponseEntity<List<CaseEntityDto>> getAllCases() {
+        return ResponseEntity.ok().body(caseService.getAll());
     }
 
     @GetMapping("/{caseId}")
-    public CaseEntityDto getCase(@PathVariable UUID caseId) {
-        return caseService.getById(caseId);
+    public ResponseEntity<CaseEntityDto> getCaseById(@PathVariable UUID caseId) {
+        return ResponseEntity.ok().body(caseService.getById(caseId));
     }
 
     @DeleteMapping("/{caseId}")

@@ -42,4 +42,20 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="002-add-unique-case-number" author="bartek">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <uniqueConstraintExists
+                        tableName="cases"
+                        constraintName="uk_cases_case_number"/>
+            </not>
+        </preConditions>
+
+        <addUniqueConstraint
+                tableName="cases"
+                columnNames="case_number"
+                constraintName="uk_cases_case_number"/>
+    </changeSet>
+
+
 </databaseChangeLog>

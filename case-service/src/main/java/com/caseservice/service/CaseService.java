@@ -41,9 +41,9 @@ public class CaseService {
                 .status(CaseStatus.SUBMITTED)
                 .build();
 
-        caseRepository.save(caseEntity);
+        CaseEntity saved = caseRepository.save(caseEntity);
 
-        return mapper.toResponse(caseEntity);
+        return mapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -63,6 +63,7 @@ public class CaseService {
 
     @Transactional
     public void changeStatus(UUID caseId, CaseStatus newStatus) {
+        log.info("Changing case {} status to {}", caseId, newStatus);
 
         CaseEntity caseEntity = caseRepository.findById(caseId)
                 .orElseThrow(() -> new CaseNotFoundException("Case with id " + caseId + " not found"));
@@ -74,7 +75,6 @@ public class CaseService {
         }
 
         caseEntity.setStatus(newStatus);
-        caseRepository.save(caseEntity);
     }
 
     @Transactional
