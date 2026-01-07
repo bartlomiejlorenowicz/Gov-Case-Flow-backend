@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +30,8 @@ public class CaseService {
 
     private final CaseMapper mapper;
 
+    private final Clock clock;
+
     @Transactional
     public CaseResponse createCase(CreateCaseRequest createCaseRequest) {
 
@@ -39,6 +43,7 @@ public class CaseService {
                 .caseNumber(createCaseRequest.caseNumber())
                 .applicantPesel(createCaseRequest.applicantPesel())
                 .status(CaseStatus.SUBMITTED)
+                .createdAt(Instant.now(clock))
                 .build();
 
         CaseEntity saved = caseRepository.save(caseEntity);
