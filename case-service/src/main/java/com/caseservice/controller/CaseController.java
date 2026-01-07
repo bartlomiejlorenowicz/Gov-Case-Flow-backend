@@ -1,10 +1,9 @@
 package com.caseservice.controller;
 
-import com.caseservice.domain.CaseEntity;
 import com.caseservice.dto.request.ChangeCaseStatusRequest;
 import com.caseservice.dto.request.CreateCaseRequest;
+import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
-import com.caseservice.dto.response.CeaseDeleteResponse;
 import com.caseservice.service.CaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
