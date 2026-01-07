@@ -4,24 +4,35 @@ import com.caseservice.domain.CaseEntity;
 import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseStatusTransitions;
 import com.caseservice.dto.request.CreateCaseRequest;
+import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
+import com.caseservice.exceptions.CaseAlreadyExistsException;
+import com.caseservice.exceptions.CaseNotFoundException;
 import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
+import com.caseservice.mapper.CaseMapper;
 import com.caseservice.repository.CaseRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class CaseService {
 
     private final CaseRepository caseRepository;
 
+    private final CaseMapper mapper;
+
+    @Transactional
     public CaseResponse createCase(CreateCaseRequest createCaseRequest) {
 
         if (caseRepository.existsByCaseNumber(createCaseRequest.caseNumber())) {
-            throw new IllegalArgumentException("Case with the same case number already exists");
+            throw new CaseAlreadyExistsException("Case with the same case number already exists");
         }
 
         CaseEntity caseEntity = CaseEntity.builder()
@@ -32,13 +43,29 @@ public class CaseService {
 
         caseRepository.save(caseEntity);
 
-        return map(caseEntity);
+        return mapper.toResponse(caseEntity);
     }
 
+    @Transactional(readOnly = true)
+    public List<CaseEntityDto> getAll() {
+        return caseRepository.findAll()
+                .stream()
+                .map(mapper::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CaseEntityDto getById(UUID id) {
+        CaseEntity caseEntity = caseRepository.findById(id)
+                .orElseThrow(() -> new CaseNotFoundException("Case with id " + id + " not found"));
+        return mapper.toDto(caseEntity);
+    }
+
+    @Transactional
     public void changeStatus(UUID caseId, CaseStatus newStatus) {
 
         CaseEntity caseEntity = caseRepository.findById(caseId)
-                .orElseThrow(() -> new IllegalArgumentException("Case with id " + caseId + " not found"));
+                .orElseThrow(() -> new CaseNotFoundException("Case with id " + caseId + " not found"));
 
         CaseStatus currentStatus = caseEntity.getStatus();
 
@@ -50,13 +77,13 @@ public class CaseService {
         caseRepository.save(caseEntity);
     }
 
-    private CaseResponse map(CaseEntity caseEntity) {
-        return new CaseResponse(
-                caseEntity.getId(),
-                caseEntity.getCaseNumber(),
-                caseEntity.getStatus(),
-                caseEntity.getApplicantPesel(),
-                caseEntity.getCreatedAt()
-        );
+    @Transactional
+    public void deleteCase(UUID caseId) {
+        log.info("Deleting case with id {}", caseId);
+        CaseEntity entity = caseRepository.findById(caseId)
+                .orElseThrow(() ->
+                        new CaseNotFoundException("Case with id " + caseId + " not found")
+                );
+        caseRepository.delete(entity);
     }
 }

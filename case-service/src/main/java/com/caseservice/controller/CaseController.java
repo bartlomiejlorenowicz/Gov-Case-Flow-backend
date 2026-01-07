@@ -1,8 +1,11 @@
 package com.caseservice.controller;
 
+import com.caseservice.domain.CaseEntity;
 import com.caseservice.dto.request.ChangeCaseStatusRequest;
 import com.caseservice.dto.request.CreateCaseRequest;
+import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
+import com.caseservice.dto.response.CeaseDeleteResponse;
 import com.caseservice.service.CaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,6 +31,22 @@ public class CaseController {
     @PatchMapping("/{caseId}/status")
     public ResponseEntity<Void> changeCaseStatus(@PathVariable UUID caseId, @RequestBody ChangeCaseStatusRequest  changeCaseStatusRequest) {
         caseService.changeStatus(caseId, changeCaseStatusRequest.newStatus());
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public List<CaseEntityDto> getAll() {
+        return caseService.getAll();
+    }
+
+    @GetMapping("/{caseId}")
+    public CaseEntityDto getCase(@PathVariable UUID caseId) {
+        return caseService.getById(caseId);
+    }
+
+    @DeleteMapping("/{caseId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID caseId) {
+        caseService.deleteCase(caseId);
         return ResponseEntity.noContent().build();
     }
 

@@ -11,6 +11,12 @@
 
     <changeSet id="001-create-cases-table" author="bartek">
 
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="cases"/>
+            </not>
+        </preConditions>
+
         <createTable tableName="cases">
             <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
                 <constraints primaryKey="true" nullable="false"/>
