@@ -1,0 +1,48 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="003-create-case-status-history-table" author="bartek">
+
+        <createTable tableName="case_status_history">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="case_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="old_status" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="new_status" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="changed_at" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="changed_by" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_case_status_history_case_id"
+                     tableName="case_status_history">
+            <column name="case_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_case_status_history_changed_at"
+                     tableName="case_status_history">
+            <column name="changed_at"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

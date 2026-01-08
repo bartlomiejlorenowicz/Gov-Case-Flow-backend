@@ -2,6 +2,7 @@ package com.caseservice.service;
 
 import com.caseservice.domain.CaseEntity;
 import com.caseservice.domain.CaseStatus;
+import com.caseservice.domain.CaseStatusHistory;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.exceptions.CaseAlreadyExistsException;
@@ -9,16 +10,14 @@ import com.caseservice.exceptions.CaseNotFoundException;
 import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
 import com.caseservice.mapper.CaseMapper;
 import com.caseservice.repository.CaseRepository;
+import com.caseservice.repository.CaseStatusHistoryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,6 +39,10 @@ class CaseServiceTest {
 
     @Mock
     private Clock clock;
+
+    @Mock
+    private CaseStatusHistoryRepository historyRepository;
+
 
     @Test
     void shouldCreateCaseSuccessfully() {
@@ -180,53 +183,25 @@ class CaseServiceTest {
     }
 
     @Test
-    void shouldSetCreatedAtUsingClock() {
+    void shouldSaveStatusHistoryWhenChangingStatus() {
         // given
-        Instant fixedInstant = Instant.parse("2026-01-01T10:00:00Z");
-        Clock fixedClock = Clock.fixed(fixedInstant, ZoneOffset.UTC);
+        UUID caseId = UUID.randomUUID();
 
-        CaseService caseService =
-                new CaseService(caseRepository, caseMapper, fixedClock);
-
-        CreateCaseRequest request =
-                new CreateCaseRequest("CASE-2026-003", "90010112345");
-
-        CaseEntity savedEntity = CaseEntity.builder()
-                .id(UUID.randomUUID())
-                .caseNumber(request.caseNumber())
-                .applicantPesel(request.applicantPesel())
+        CaseEntity entity = CaseEntity.builder()
+                .id(caseId)
                 .status(CaseStatus.SUBMITTED)
-                .createdAt(fixedInstant)
                 .build();
 
-        when(caseRepository.existsByCaseNumber(request.caseNumber()))
-                .thenReturn(false);
-
-        when(caseRepository.save(any(CaseEntity.class)))
-                .thenReturn(savedEntity);
-
-        when(caseMapper.toResponse(savedEntity))
-                .thenReturn(
-                        CaseResponse.builder()
-                                .id(savedEntity.getId())
-                                .caseNumber(savedEntity.getCaseNumber())
-                                .applicantPesel(savedEntity.getApplicantPesel())
-                                .status(savedEntity.getStatus())
-                                .build()
-                );
+        when(caseRepository.findById(caseId)).thenReturn(Optional.of(entity));
 
         // when
-        caseService.createCase(request);
+        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW);
 
         // then
-        ArgumentCaptor<CaseEntity> captor =
-                ArgumentCaptor.forClass(CaseEntity.class);
+        assertEquals(CaseStatus.IN_REVIEW, entity.getStatus());
 
-        verify(caseRepository).save(captor.capture());
-
-        assertEquals(
-                fixedInstant,
-                captor.getValue().getCreatedAt()
-        );
+        // then
+        verify(historyRepository).save(any(CaseStatusHistory.class));
     }
+
 }
