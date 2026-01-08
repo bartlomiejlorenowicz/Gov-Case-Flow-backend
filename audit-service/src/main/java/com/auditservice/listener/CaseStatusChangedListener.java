@@ -1,9 +1,10 @@
 package com.auditservice.listener;
 
+import com.auditservice.config.AuditAmqpConfig;
+import com.auditservice.event.CaseStatusChangedEvent;
 import com.auditservice.service.AuditService;
-import com.caseservice.event.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.event.EventListener;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,7 +13,7 @@ public class CaseStatusChangedListener {
 
     private final AuditService auditService;
 
-    @EventListener
+    @RabbitListener(queues = AuditAmqpConfig.AUDIT_QUEUE)
     public void handle(CaseStatusChangedEvent event) {
         auditService.save(event);
     }
