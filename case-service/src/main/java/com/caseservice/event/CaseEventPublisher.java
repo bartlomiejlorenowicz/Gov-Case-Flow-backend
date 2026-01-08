@@ -1,4 +1,5 @@
 package com.caseservice.event;
 
-public class CaseEventPublisher {
+public interface CaseEventPublisher {
+    void publishStatusChanged(CaseStatusChangedEvent event);
 }

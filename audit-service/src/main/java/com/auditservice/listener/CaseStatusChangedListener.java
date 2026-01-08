@@ -4,17 +4,20 @@ import com.auditservice.config.AuditAmqpConfig;
 import com.auditservice.event.CaseStatusChangedEvent;
 import com.auditservice.service.AuditService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CaseStatusChangedListener {
 
     private final AuditService auditService;
 
-    @RabbitListener(queues = AuditAmqpConfig.AUDIT_QUEUE)
+    @RabbitListener(queues = AuditAmqpConfig.QUEUE)
     public void handle(CaseStatusChangedEvent event) {
+        log.info("Received CaseStatusChangedEvent: {}", event);
         auditService.save(event);
     }
 }

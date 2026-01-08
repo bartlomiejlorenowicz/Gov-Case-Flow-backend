@@ -1,37 +1,31 @@
 package com.auditservice.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AuditAmqpConfig {
 
-    public static final String CASE_EXCHANGE = "case.exchange";
-    public static final String AUDIT_QUEUE = "audit.case-status.queue";
-    public static final String ROUTING_KEY_PATTERN = "case.status.*";
-
-    @Bean
-    public Queue auditQueue() {
-        return new Queue(AUDIT_QUEUE, true);
-    }
+    public static final String EXCHANGE = "case.events.exchange";
+    public static final String QUEUE = "audit.case-status.queue";
+    public static final String ROUTING_KEY = "case.status.changed";
 
     @Bean
     public TopicExchange caseExchange() {
-        return new TopicExchange(CASE_EXCHANGE);
+        return new TopicExchange(EXCHANGE);
     }
 
     @Bean
-    public Binding auditBinding(
-            Queue auditQueue,
-            TopicExchange caseExchange
-    ) {
+    public Queue auditQueue() {
+        return QueueBuilder.durable(QUEUE).build();
+    }
+
+    @Bean
+    public Binding auditBinding() {
         return BindingBuilder
-                .bind(auditQueue)
-                .to(caseExchange)
-                .with(ROUTING_KEY_PATTERN);
+                .bind(auditQueue())
+                .to(caseExchange())
+                .with(ROUTING_KEY);
     }
 }
