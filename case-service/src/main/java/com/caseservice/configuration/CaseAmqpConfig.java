@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 public class CaseAmqpConfig {
 
     public static final String EXCHANGE = "case.events.exchange";
-    public static final String QUEUE = "case.status.changed.queue";
     public static final String ROUTING_KEY = "case.status.changed";
 
     @Bean

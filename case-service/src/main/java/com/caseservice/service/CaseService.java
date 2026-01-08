@@ -7,7 +7,6 @@ import com.caseservice.domain.CaseStatusTransitions;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
-import com.caseservice.event.CaseEventPublisher;
 import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.exceptions.CaseAlreadyExistsException;
 import com.caseservice.exceptions.CaseNotFoundException;
@@ -17,6 +16,7 @@ import com.caseservice.repository.CaseRepository;
 import com.caseservice.repository.CaseStatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +38,8 @@ public class CaseService {
 
     private final CaseStatusHistoryRepository historyRepository;
 
-    private final CaseEventPublisher caseEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     @Transactional
     public CaseResponse createCase(CreateCaseRequest createCaseRequest) {
@@ -99,7 +100,7 @@ public class CaseService {
 
         caseEntity.setStatus(newStatus);
 
-        caseEventPublisher.publishStatusChanged(
+        applicationEventPublisher.publishEvent(
                 new CaseStatusChangedEvent(
                         caseId,
                         oldStatus,
