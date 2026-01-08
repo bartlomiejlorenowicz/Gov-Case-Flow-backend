@@ -5,6 +5,7 @@ import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseStatusHistory;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseResponse;
+import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.exceptions.CaseAlreadyExistsException;
 import com.caseservice.exceptions.CaseNotFoundException;
 import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Clock;
 import java.util.Optional;
@@ -43,6 +45,8 @@ class CaseServiceTest {
     @Mock
     private CaseStatusHistoryRepository historyRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Test
     void shouldCreateCaseSuccessfully() {
@@ -202,6 +206,29 @@ class CaseServiceTest {
 
         // then
         verify(historyRepository).save(any(CaseStatusHistory.class));
+    }
+
+    @Test
+    void shouldChangeCaseStatusAndSaveStatusHistory() {
+        // given
+        UUID caseId = UUID.randomUUID();
+
+        CaseEntity entity = CaseEntity.builder()
+                .id(caseId)
+                .status(CaseStatus.SUBMITTED)
+                .build();
+
+        when(caseRepository.findById(caseId)).thenReturn(Optional.of(entity));
+
+        // when
+        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW);
+
+        // then
+        assertEquals(CaseStatus.IN_REVIEW, entity.getStatus());
+
+        // then
+        verify(historyRepository).save(any(CaseStatusHistory.class));
+        verify(eventPublisher).publishEvent(any(CaseStatusChangedEvent.class));
     }
 
 }
