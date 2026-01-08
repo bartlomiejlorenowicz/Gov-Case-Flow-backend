@@ -2,6 +2,7 @@ package com.caseservice.service;
 
 import com.caseservice.domain.CaseEntity;
 import com.caseservice.domain.CaseStatus;
+import com.caseservice.domain.CaseStatusHistory;
 import com.caseservice.domain.CaseStatusTransitions;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
@@ -11,6 +12,7 @@ import com.caseservice.exceptions.CaseNotFoundException;
 import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
 import com.caseservice.mapper.CaseMapper;
 import com.caseservice.repository.CaseRepository;
+import com.caseservice.repository.CaseStatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,8 @@ public class CaseService {
     private final CaseMapper mapper;
 
     private final Clock clock;
+
+    private final CaseStatusHistoryRepository historyRepository;
 
     @Transactional
     public CaseResponse createCase(CreateCaseRequest createCaseRequest) {
@@ -73,11 +77,21 @@ public class CaseService {
         CaseEntity caseEntity = caseRepository.findById(caseId)
                 .orElseThrow(() -> new CaseNotFoundException("Case with id " + caseId + " not found"));
 
-        CaseStatus currentStatus = caseEntity.getStatus();
+        CaseStatus oldStatus = caseEntity.getStatus();
 
-        if (!CaseStatusTransitions.isAllowedTransition(currentStatus, newStatus)) {
-            throw new InvalidCaseStatusTransitionException("Invalid status transition from " + currentStatus + " to " + newStatus);
+        if (!CaseStatusTransitions.isAllowedTransition(oldStatus, newStatus)) {
+            throw new InvalidCaseStatusTransitionException("Invalid status transition from " + oldStatus + " to " + newStatus);
         }
+
+        CaseStatusHistory history = CaseStatusHistory.builder()
+                .caseId(caseId)
+                .oldStatus(oldStatus)
+                .newStatus(newStatus)
+                .changedAt(Instant.now(clock))
+                .changedBy("system")
+                .build();
+
+        historyRepository.save(history);
 
         caseEntity.setStatus(newStatus);
     }
