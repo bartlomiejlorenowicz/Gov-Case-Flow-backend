@@ -1,6 +1,5 @@
 package com.auditservice.domain;
 
-import com.caseservice.domain.CaseStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -2,7 +2,7 @@ package com.auditservice.service;
 
 import com.auditservice.domain.AuditEntry;
 import com.auditservice.repository.AuditRepository;
-import com.caseservice.event.CaseStatusChangedEvent;
+import com.auditservice.event.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
