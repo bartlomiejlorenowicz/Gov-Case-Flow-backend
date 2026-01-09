@@ -5,6 +5,7 @@ import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseStatusHistory;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseResponse;
+import com.caseservice.event.CaseEventPublisher;
 import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.exceptions.CaseAlreadyExistsException;
 import com.caseservice.exceptions.CaseNotFoundException;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Clock;
 import java.util.Optional;
@@ -46,7 +46,7 @@ class CaseServiceTest {
     private CaseStatusHistoryRepository historyRepository;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private CaseEventPublisher caseEventPublisher;
 
     @Test
     void shouldCreateCaseSuccessfully() {
@@ -228,7 +228,7 @@ class CaseServiceTest {
 
         // then
         verify(historyRepository).save(any(CaseStatusHistory.class));
-        verify(eventPublisher).publishEvent(any(CaseStatusChangedEvent.class));
+        verify(caseEventPublisher).publishStatusChanged(any(CaseStatusChangedEvent.class));
     }
 
 }
