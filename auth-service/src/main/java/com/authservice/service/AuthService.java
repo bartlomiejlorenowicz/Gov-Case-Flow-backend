@@ -1,9 +1,11 @@
 package com.authservice.service;
 
+import com.authservice.domain.RefreshToken;
 import com.authservice.domain.Role;
 import com.authservice.domain.User;
 import com.authservice.dto.request.LoginRequest;
 import com.authservice.dto.request.RegisterRequest;
+import com.authservice.dto.response.AuthResponse;
 import com.authservice.exception.InvalidCredentialsException;
 import com.authservice.exception.UserAlreadyExistsException;
 import com.authservice.repository.UserRepository;
@@ -25,6 +27,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -61,5 +64,17 @@ public class AuthService {
                         .map(Enum::name)
                         .toList()
         );
+    }
+
+    public AuthResponse refresh(String refreshTokenValue) {
+
+        RefreshToken refreshToken =
+                refreshTokenService.validate(refreshTokenValue);
+
+        User user = refreshToken.getUser();
+
+        String accessToken = jwtService.generateAccessToken(user);
+
+        return new AuthResponse(accessToken);
     }
 }
