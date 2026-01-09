@@ -5,6 +5,7 @@ import com.authservice.exception.InvalidTokenException;
 import com.authservice.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -30,5 +31,14 @@ public class RefreshTokenService {
         }
 
         return rt;
+    }
+
+    @Transactional
+    public void revoke(String token) {
+
+        RefreshToken refreshToken = repository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
+
+        refreshToken.setRevoked(true);
     }
 }
