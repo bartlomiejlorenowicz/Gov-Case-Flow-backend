@@ -1,5 +1,6 @@
 package com.authservice.security;
 
+import com.authservice.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -44,6 +45,17 @@ public class JwtService {
                 .setExpiration(expiry)
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String generateAccessToken(User user) {
+        return generateToken(
+                user.getId(),
+                user.getUsername(),
+                user.getRoles()
+                        .stream()
+                        .map(Enum::name)
+                        .toList()
+        );
     }
 
     public boolean isTokenValid(String token) {
