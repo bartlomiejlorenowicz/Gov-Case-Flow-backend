@@ -81,6 +81,18 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
 
+  notification-service:
+    container_name: notification-service
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+
 volumes:
   pgdata:
   audit_pgdata:
