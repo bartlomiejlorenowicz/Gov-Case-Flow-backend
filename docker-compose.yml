@@ -81,11 +81,45 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
 
-  notification-service:
-    container_name: notification-service
+  auth-postgres:
+    image: postgres:17
+    container_name: auth-postgres
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5434:5432"
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d auth_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    container_name: auth-service
     build:
-      context: .
-      dockerfile: notification-service/Dockerfile
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/audit_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+
+  notification-service:
+    build:
+      context: ./notification-service
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -96,4 +130,5 @@ services:
 volumes:
   pgdata:
   audit_pgdata:
+  auth_pgdata:
 
