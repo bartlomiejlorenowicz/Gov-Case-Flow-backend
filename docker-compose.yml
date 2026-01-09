@@ -23,6 +23,8 @@ services:
       POSTGRES_DB: audit_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
+    volumes:
+      - audit_pgdata:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     healthcheck:
@@ -81,3 +83,5 @@ services:
 
 volumes:
   pgdata:
+  audit_pgdata:
+
