@@ -99,15 +99,16 @@ public class CaseService {
 
         caseEntity.setStatus(newStatus);
 
-        caseEventPublisher.publishStatusChanged(
+        CaseStatusChangedEvent event =
                 new CaseStatusChangedEvent(
                         caseId,
                         oldStatus,
                         newStatus,
                         Instant.now(clock),
                         "SYSTEM"
-                )
-        );
+                );
+
+        caseEventPublisher.publishStatusChanged(event);
     }
 
     @Transactional
