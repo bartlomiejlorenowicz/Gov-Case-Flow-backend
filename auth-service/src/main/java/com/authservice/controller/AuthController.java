@@ -1,5 +1,6 @@
 package com.authservice.controller;
 
+import com.authservice.dto.request.LoginRequest;
 import com.authservice.dto.request.LogoutRequest;
 import com.authservice.dto.request.RefreshTokenRequest;
 import com.authservice.dto.request.RegisterRequest;
@@ -26,6 +27,12 @@ public class AuthController {
         authService.register(request);
     }
 
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        String accessToken = authService.login(request);
+        return new AuthResponse(accessToken);
+    }
+
     @PostMapping("/refresh")
     public AuthResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return authService.refresh(request.refreshToken());
@@ -36,6 +43,4 @@ public class AuthController {
     public void logout(@Valid @RequestBody LogoutRequest request) {
         refreshTokenService.revoke(request.refreshToken());
     }
-
-
 }

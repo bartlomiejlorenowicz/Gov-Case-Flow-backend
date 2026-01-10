@@ -32,7 +32,7 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest request) {
 
-        if (userRepository.existsByEmailIgnoreCase(request.email())) {
+        if (userRepository.existsByUsernameIgnoreCase(request.email())) {
             throw new UserAlreadyExistsException("User with email already exists");
         }
 
