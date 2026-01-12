@@ -58,6 +58,7 @@ class CaseServiceTest {
                 .caseNumber(request.caseNumber())
                 .applicantPesel(request.applicantPesel())
                 .status(CaseStatus.SUBMITTED)
+                .createdByUserId(UUID.randomUUID())
                 .build();
 
         CaseResponse response = CaseResponse.builder()
@@ -73,7 +74,7 @@ class CaseServiceTest {
         when(caseMapper.toResponse(savedEntity)).thenReturn(response);
 
         //then
-        CaseResponse result = caseService.createCase(request);
+        CaseResponse result = caseService.createCase(request, savedEntity.getId());
 
         //then
         assertEquals(response, result);
@@ -86,12 +87,13 @@ class CaseServiceTest {
     @Test
     void shouldThrowExceptionWhenCaseNumberAlreadyExists() {
         //given
+        UUID userId = UUID.randomUUID();
         CreateCaseRequest request = new CreateCaseRequest("CASE-2026-003", "90010112345");
 
         when(caseRepository.existsByCaseNumber(request.caseNumber())).thenReturn(true);
 
         //when and then
-        assertThrows(CaseAlreadyExistsException.class, () -> caseService.createCase(request));
+        assertThrows(CaseAlreadyExistsException.class, () -> caseService.createCase(request, userId));
 
         verify(caseRepository).existsByCaseNumber(request.caseNumber());
         verify(caseRepository, never()).save(any());

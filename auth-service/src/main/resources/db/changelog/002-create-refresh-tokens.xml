@@ -37,4 +37,11 @@
                 constraintName="fk_refresh_tokens_users"/>
     </changeSet>
 
+    <changeSet id="004-default-created-at-refresh-tokens" author="Bartek">
+        <addDefaultValue
+                tableName="refresh_tokens"
+                columnName="created_at"
+                defaultValueComputed="CURRENT_TIMESTAMP"/>
+    </changeSet>
+
 </databaseChangeLog>

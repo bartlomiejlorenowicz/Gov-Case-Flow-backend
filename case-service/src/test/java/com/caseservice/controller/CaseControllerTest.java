@@ -6,18 +6,27 @@ import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.exceptions.CaseNotFoundException;
+import com.caseservice.security.JwtService;
+import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,6 +44,9 @@ class CaseControllerTest {
 
     @MockBean
     CaseService caseService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -68,12 +80,21 @@ class CaseControllerTest {
         //given
         List<CaseEntityDto> expectedCases = new ArrayList<>(cases);
 
+        UUID userId = UUID.randomUUID();
+        var principal = new UserPrincipal(userId, "test@test.com");
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
         //when
-        when(caseService.getAll()).thenReturn(expectedCases);
+        when(caseService.getAllForUser(principal.userId())).thenReturn(expectedCases);
 
         //then
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/cases")
-                        .header("Accept", "application/json"))
+        mockMvc.perform(get("/api/cases")
+                        .header("Accept", "application/json")
+                        .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
                 .andExpect(MockMvcResultMatchers.jsonPath("$").isNotEmpty())
@@ -86,12 +107,20 @@ class CaseControllerTest {
     void shouldReturnEmptyBodyWhenNoCasesExist() throws Exception {
         //given
         List<CaseEntityDto> expectedCases = new ArrayList<>();
+        UUID userId = UUID.randomUUID();
+        UserPrincipal principal = new UserPrincipal(userId, "test@test.com");
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
 
         //when
         when(caseService.getAll()).thenReturn(expectedCases);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/cases")
-                        .header("Accept", "application/json"))
+        mockMvc.perform(get("/api/cases")
+                        .header("Accept", "application/json")
+                        .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
                 .andExpect(MockMvcResultMatchers.jsonPath("$").isEmpty());
@@ -101,46 +130,78 @@ class CaseControllerTest {
     void shouldReturn404WhenCaseNotFound() throws Exception {
         //given
         UUID caseId = UUID.randomUUID();
+        UserPrincipal principal = new UserPrincipal(caseId, "test@test.com");
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
         //when
         when(caseService.getById(caseId))
                 .thenThrow(new CaseNotFoundException("Case with id " + caseId + " not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/cases/" + caseId)
-                        .header("Accept", "application/json"))
+        mockMvc.perform(get("/api/cases/" + caseId)
+                        .header("Accept", "application/json")
+                        .with(authentication(auth)))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void shouldCreateCaseSuccessfully() throws Exception {
-        //given
-        CreateCaseRequest createCaseRequest = new CreateCaseRequest("CASE-2026-003", "90010112377");
+        UUID userId = UUID.randomUUID();
 
-        CaseResponse caseResponse = new CaseResponse(UUID.randomUUID(), "CASE-2026-003", CaseStatus.SUBMITTED, "90010112377", Instant.now());
-        //when
-        when(caseService.createCase(createCaseRequest)).thenReturn(caseResponse);
+        CreateCaseRequest request =
+                new CreateCaseRequest("CASE-2026-003", "90010112377");
 
-        //then
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/cases")
-                        .header("Accept", "application/json")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(createCaseRequest)))
-                .andExpect(status().isCreated());
+        CaseResponse response =
+                new CaseResponse(
+                        UUID.randomUUID(),
+                        "CASE-2026-003",
+                        CaseStatus.SUBMITTED,
+                        "90010112377",
+                        Instant.now()
+                );
+
+        var principal = new UserPrincipal(userId, "test@test.com");
+
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        when(caseService.createCase(eq(request), eq(userId))).thenReturn(response);
+
+        mockMvc.perform(post("/api/cases")
+                        .with(authentication(auth))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.caseNumber").value("CASE-2026-003"))
+                .andExpect(jsonPath("$.status").value("SUBMITTED"));
     }
 
     @Test
     void shouldReturn400WhenCreateCaseRequestIsInvalid() throws Exception {
         //given
         CreateCaseRequest createCaseRequest = new CreateCaseRequest("CASE-2026-003", "900101123");
-
+        UUID userId = UUID.randomUUID();
         CaseResponse caseResponse = new CaseResponse(UUID.randomUUID(), "CASE-2026-003", CaseStatus.SUBMITTED, "900101123", Instant.now());
 
+        UserPrincipal principal = new UserPrincipal(userId, "test@test.com");
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER")));
         //when
-        when(caseService.createCase(createCaseRequest)).thenReturn(caseResponse);
+        when(caseService.createCase(createCaseRequest, userId)).thenReturn(caseResponse);
 
         //then
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/cases")
+        mockMvc.perform(post("/api/cases")
                         .contentType("application/json")
+                        .with(authentication(auth))
+                        .with(csrf())
                         .content(objectMapper.writeValueAsString(createCaseRequest)))
                 .andExpect(status().isBadRequest());
     }
@@ -149,34 +210,74 @@ class CaseControllerTest {
     void shouldChangeCaseStatusSuccessfully() throws Exception {
         // given
         UUID caseId = UUID.randomUUID();
+        CaseResponse caseResponse = new CaseResponse(UUID.randomUUID(), "CASE-2026-003", CaseStatus.IN_REVIEW, "900101123", Instant.now());
+
+        UserPrincipal principal = new UserPrincipal(caseId, "test@test.com");
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
         ChangeCaseStatusRequest request =
-                new ChangeCaseStatusRequest(CaseStatus.IN_REVIEW);
+                new ChangeCaseStatusRequest(CaseStatus.SUBMITTED);
 
         // when + then
         mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                        .with(authentication(auth))
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNoContent());
 
-        verify(caseService).changeStatus(caseId, CaseStatus.IN_REVIEW);
+        verify(caseService).changeStatus(caseId, CaseStatus.SUBMITTED);
     }
 
     @Test
     void shouldReturn400WhenStatusIsNull() throws Exception {
         UUID caseId = UUID.randomUUID();
+        UserPrincipal principal = new UserPrincipal(caseId, "test@test.com");
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
 
         String json = """
-        {
-            "newStatus": null
-        }
-        """;
+                {
+                    "newStatus": null
+                }
+                """;
 
         mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(json))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                        .with(authentication(auth))
+                        .content(json))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(caseService);
+    }
+
+    @Test
+    void shouldReturnMyCases() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        var principal = new UserPrincipal(userId, "test@test.com");
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        when(caseService.getAllForUser(userId)).thenReturn(cases);
+
+        mockMvc.perform(get("/api/cases")
+                        .with(authentication(auth))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].caseNumber").value("CASE-2026-001"))
+                .andExpect(jsonPath("$[1].caseNumber").value("CASE-2026-002"));
     }
 }

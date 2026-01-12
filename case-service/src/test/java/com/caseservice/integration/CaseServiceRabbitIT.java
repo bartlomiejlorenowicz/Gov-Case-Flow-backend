@@ -14,6 +14,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -22,6 +23,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import java.util.UUID;
@@ -97,6 +100,7 @@ class CaseServiceRabbitIT {
         );
     }
 
+    @WithMockUser(username = "test@test.com", roles = "USER")
     @Test
     void shouldChangeStatusAndPublishEventToRabbit() throws Exception {
         // given
@@ -118,6 +122,7 @@ class CaseServiceRabbitIT {
         mockMvc.perform(
                         patch("/api/cases/{caseId}/status", caseId)
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .with(csrf())
                                 .content(json)
                 )
                 .andExpect(status().isNoContent());

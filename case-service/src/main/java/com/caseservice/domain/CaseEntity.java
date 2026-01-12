@@ -45,4 +45,7 @@ public class CaseEntity {
         this.updatedAt = Instant.now();
     }
 
+    @Column(name = "created_by_user_id", nullable = false)
+    private UUID createdByUserId;
+
 }

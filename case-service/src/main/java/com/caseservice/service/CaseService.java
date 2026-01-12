@@ -41,7 +41,7 @@ public class CaseService {
     private final CaseEventPublisher caseEventPublisher;
 
     @Transactional
-    public CaseResponse createCase(CreateCaseRequest createCaseRequest) {
+    public CaseResponse createCase(CreateCaseRequest createCaseRequest, UUID userId) {
 
         if (caseRepository.existsByCaseNumber(createCaseRequest.caseNumber())) {
             throw new CaseAlreadyExistsException("Case with the same case number already exists");
@@ -52,11 +52,20 @@ public class CaseService {
                 .applicantPesel(createCaseRequest.applicantPesel())
                 .status(CaseStatus.SUBMITTED)
                 .createdAt(Instant.now(clock))
+                .createdByUserId(userId)
                 .build();
 
         CaseEntity saved = caseRepository.save(caseEntity);
 
         return mapper.toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CaseEntityDto> getAllForUser(UUID userId) {
+        return caseRepository.findAllByCreatedByUserId(userId)
+                .stream()
+                .map(mapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)

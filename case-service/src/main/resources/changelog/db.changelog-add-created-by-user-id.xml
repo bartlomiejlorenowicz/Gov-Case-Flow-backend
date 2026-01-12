@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="004-add-created-by-user-id" author="bartek">
+
+        <addColumn tableName="cases">
+            <column name="created_by_user_id" type="uuid"/>
+        </addColumn>
+
+    </changeSet>
+
+    <changeSet id="005-index-created-by-user-id" author="bartek">
+        <createIndex indexName="idx_cases_created_by_user_id" tableName="cases">
+            <column name="created_by_user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

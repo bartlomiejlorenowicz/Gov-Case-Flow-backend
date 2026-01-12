@@ -29,8 +29,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        String accessToken = authService.login(request);
-        return new AuthResponse(accessToken);
+        return authService.login(request);
     }
 
     @PostMapping("/refresh")
