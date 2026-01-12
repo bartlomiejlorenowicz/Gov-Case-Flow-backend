@@ -2,6 +2,7 @@ package com.authservice.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -22,6 +23,10 @@ public class RefreshToken {
     @Column(nullable = false, unique = true)
     private String token;
 
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -31,4 +36,13 @@ public class RefreshToken {
 
     @Column(nullable = false)
     private boolean revoked;
+
+//    @PrePersist
+//    public void prePersist() {
+//        if (createdAt == null) {
+//            createdAt = Instant.now();
+//        }
+//    }
 }
+
+
