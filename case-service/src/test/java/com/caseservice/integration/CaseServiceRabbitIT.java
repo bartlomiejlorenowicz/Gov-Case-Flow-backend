@@ -2,8 +2,10 @@ package com.caseservice.integration;
 
 import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseEntity;
+import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.repository.CaseRepository;
 import com.caseservice.repository.CaseStatusHistoryRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,6 +83,9 @@ class CaseServiceRabbitIT {
     @Autowired
     RabbitAdmin rabbitAdmin;
 
+    @Autowired
+    ObjectMapper objectMapper;
+
     @BeforeEach
     void setup() {
         historyRepository.deleteAll();
@@ -134,12 +139,25 @@ class CaseServiceRabbitIT {
         // then
         assertThat(historyRepository.findAll()).hasSize(1);
 
-        // then 3
         Awaitility.await()
                 .atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     Message message = rabbitTemplate.receive(AUDIT_QUEUE);
                     assertThat(message).isNotNull();
+
+                    String jsonBody = new String(message.getBody());
+                    assertThat(jsonBody).isNotBlank();
+
+                    CaseStatusChangedEvent event =
+                            objectMapper.readValue(jsonBody, CaseStatusChangedEvent.class);
+
+                    assertThat(event.caseId()).isEqualTo(caseId);
+                    assertThat(event.oldStatus()).isEqualTo(CaseStatus.SUBMITTED);
+                    assertThat(event.newStatus()).isEqualTo(CaseStatus.IN_REVIEW);
+                    assertThat(event.changedAt()).isNotNull();
+
+                    assertThat(event.changedBy()).isNotBlank();
                 });
+
     }
 }
