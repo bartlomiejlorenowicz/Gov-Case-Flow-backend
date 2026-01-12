@@ -4,11 +4,15 @@ import com.caseservice.dto.request.ChangeCaseStatusRequest;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
+import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,8 +26,12 @@ public class CaseController {
     private final CaseService caseService;
 
     @PostMapping
-    public ResponseEntity<CaseResponse> createCase(@Valid @RequestBody CreateCaseRequest createCaseRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(caseService.createCase(createCaseRequest));
+    public ResponseEntity<CaseResponse> createCase(
+            @Valid @RequestBody CreateCaseRequest createCaseRequest,
+            @CurrentSecurityContext(expression = "authentication.principal") UserPrincipal principal
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(caseService.createCase(createCaseRequest, principal.userId()));
     }
 
     @PatchMapping("/{caseId}/status")
@@ -33,8 +41,15 @@ public class CaseController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<CaseEntityDto>> getMyCases(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(caseService.getAllForUser(principal.userId()));
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('ADMIN','OFFICER')")
     public ResponseEntity<List<CaseEntityDto>> getAllCases() {
-        return ResponseEntity.ok().body(caseService.getAll());
+        return ResponseEntity.ok(caseService.getAll());
     }
 
     @GetMapping("/{caseId}")
@@ -47,5 +62,4 @@ public class CaseController {
         caseService.deleteCase(caseId);
         return ResponseEntity.noContent().build();
     }
-
 }

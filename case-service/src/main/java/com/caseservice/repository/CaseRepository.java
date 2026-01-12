@@ -15,4 +15,6 @@ public interface CaseRepository extends JpaRepository<CaseEntity, UUID> {
 
     boolean existsByCaseNumber(String caseNumber);
 
+    List<CaseEntity> findAllByCreatedByUserId(UUID userId);
+
 }
