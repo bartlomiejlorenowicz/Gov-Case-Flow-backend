@@ -158,6 +158,5 @@ class CaseServiceRabbitIT {
 
                     assertThat(event.changedBy()).isNotBlank();
                 });
-
     }
 }

@@ -4,10 +4,12 @@ import com.notificationservice.config.NotificationAmqpConfig;
 import com.notificationservice.event.CaseStatusChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@Profile("!test")
 public class CaseStatusChangedNotificationListener {
 
     @RabbitListener(queues = NotificationAmqpConfig.QUEUE)
