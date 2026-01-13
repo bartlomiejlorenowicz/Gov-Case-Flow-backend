@@ -1,8 +1,8 @@
 package com.auditservice.listener;
 
 import com.auditservice.service.AuditService;
-import com.auditservice.domain.CaseStatus;
-import com.auditservice.event.CaseStatusChangedEvent;
+import com.govcaseflow.events.cases.CaseStatus;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

@@ -1,5 +1,7 @@
 package com.caseservice.service;
 
+import com.caseservice.mapper.CaseStatusEventMapper;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.caseservice.domain.CaseEntity;
 import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseStatusHistory;
@@ -7,7 +9,6 @@ import com.caseservice.domain.CaseStatusTransitions;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
-import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.exceptions.CaseAlreadyExistsException;
 import com.caseservice.exceptions.CaseNotFoundException;
 import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
@@ -105,14 +106,13 @@ public class CaseService {
 
         caseEntity.setStatus(newStatus);
 
-        CaseStatusChangedEvent event =
-                new CaseStatusChangedEvent(
-                        caseId,
-                        oldStatus,
-                        newStatus,
-                        Instant.now(clock),
-                        "SYSTEM"
-                );
+        var event = new CaseStatusChangedEvent(
+                caseId,
+                CaseStatusEventMapper.toEvent(oldStatus),
+                CaseStatusEventMapper.toEvent(newStatus),
+                Instant.now(clock),
+                "SYSTEM"
+        );
 
         eventPublisher.publishEvent(event);
     }

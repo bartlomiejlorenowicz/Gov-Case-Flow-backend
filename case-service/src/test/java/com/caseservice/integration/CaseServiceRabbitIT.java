@@ -1,15 +1,19 @@
 package com.caseservice.integration;
 
+import com.caseservice.configuration.CaseAmqpConfig;
 import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseEntity;
-import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.repository.CaseRepository;
 import com.caseservice.repository.CaseStatusHistoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.http.MediaType;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -35,16 +39,17 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.rabbitmq.listener.simple.auto-startup=false"
+})
 @Testcontainers
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class CaseServiceRabbitIT {
 
-    private static final String EXCHANGE = "case.events.exchange";
-    private static final String ROUTING_KEY = "case.status.changed";
-
-    private static final String AUDIT_QUEUE = "audit.case-status.queue";
+    private static final String EXCHANGE = CaseAmqpConfig.EXCHANGE;
+    private static final String ROUTING_KEY = CaseAmqpConfig.ROUTING_KEY;
+    private static final String TEST_QUEUE = "test.case.events.queue";
 
     @Container
     static RabbitMQContainer rabbit = new RabbitMQContainer("rabbitmq:3.13-management");
@@ -91,17 +96,13 @@ class CaseServiceRabbitIT {
         historyRepository.deleteAll();
         caseRepository.deleteAll();
 
-        var queue = new org.springframework.amqp.core.Queue(AUDIT_QUEUE, true);
-        var exchange = new org.springframework.amqp.core.TopicExchange(EXCHANGE);
+        Queue queue = new Queue(TEST_QUEUE, false);
+        TopicExchange exchange = new TopicExchange(EXCHANGE, true, false);
 
-        rabbitAdmin.declareQueue(queue);
         rabbitAdmin.declareExchange(exchange);
-
+        rabbitAdmin.declareQueue(queue);
         rabbitAdmin.declareBinding(
-                org.springframework.amqp.core.BindingBuilder
-                        .bind(queue)
-                        .to(exchange)
-                        .with(ROUTING_KEY)
+                BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY)
         );
     }
 
@@ -142,7 +143,7 @@ class CaseServiceRabbitIT {
         Awaitility.await()
                 .atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    Message message = rabbitTemplate.receive(AUDIT_QUEUE);
+                    Message message = rabbitTemplate.receive(TEST_QUEUE);
                     assertThat(message).isNotNull();
 
                     String jsonBody = new String(message.getBody());
@@ -152,8 +153,8 @@ class CaseServiceRabbitIT {
                             objectMapper.readValue(jsonBody, CaseStatusChangedEvent.class);
 
                     assertThat(event.caseId()).isEqualTo(caseId);
-                    assertThat(event.oldStatus()).isEqualTo(CaseStatus.SUBMITTED);
-                    assertThat(event.newStatus()).isEqualTo(CaseStatus.IN_REVIEW);
+                    assertThat(event.oldStatus()).isEqualTo(com.govcaseflow.events.cases.CaseStatus.SUBMITTED);
+                    assertThat(event.newStatus()).isEqualTo(com.govcaseflow.events.cases.CaseStatus.IN_REVIEW);
                     assertThat(event.changedAt()).isNotNull();
 
                     assertThat(event.changedBy()).isNotBlank();

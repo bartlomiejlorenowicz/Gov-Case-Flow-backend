@@ -1,7 +1,7 @@
 package com.auditservice.listener;
 
 import com.auditservice.config.AuditAmqpConfig;
-import com.auditservice.event.CaseStatusChangedEvent;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.auditservice.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

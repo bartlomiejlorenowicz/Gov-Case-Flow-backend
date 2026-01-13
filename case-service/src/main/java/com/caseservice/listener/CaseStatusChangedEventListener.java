@@ -1,8 +1,7 @@
 package com.caseservice.listener;
 
-import com.caseservice.event.CaseEventPublisher;
-import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.messaging.RabbitCaseEventPublisher;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

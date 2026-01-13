@@ -1,8 +1,8 @@
 package com.auditservice.integration;
 
 import com.auditservice.config.AuditAmqpConfig;
-import com.auditservice.domain.CaseStatus;
-import com.auditservice.event.CaseStatusChangedEvent;
+import com.govcaseflow.events.cases.CaseStatus;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.auditservice.repository.AuditRepository;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;

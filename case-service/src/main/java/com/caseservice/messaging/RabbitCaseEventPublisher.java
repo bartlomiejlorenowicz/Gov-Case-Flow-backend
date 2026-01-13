@@ -2,7 +2,7 @@ package com.caseservice.messaging;
 
 import com.caseservice.configuration.CaseAmqpConfig;
 import com.caseservice.event.CaseEventPublisher;
-import com.caseservice.event.CaseStatusChangedEvent;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

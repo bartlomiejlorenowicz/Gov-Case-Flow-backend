@@ -1,9 +1,9 @@
 package com.notificationservice.service;
 
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.notificationservice.config.AuthNotificationAmqpConfig;
 import com.notificationservice.config.NotificationAmqpConfig;
-import com.notificationservice.event.CaseStatusChangedEvent;
-import com.notificationservice.event.UserRegisteredEvent;
+import com.govcaseflow.events.auth.UserRegisteredEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import com.govcaseflow.events.cases.CaseStatus;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -51,8 +52,8 @@ class NotificationServiceRabbitIT {
         // given
         CaseStatusChangedEvent event = new CaseStatusChangedEvent(
                 UUID.randomUUID(),
-                com.notificationservice.domain.CaseStatus.SUBMITTED,
-                com.notificationservice.domain.CaseStatus.IN_REVIEW,
+                CaseStatus.SUBMITTED,
+                CaseStatus.IN_REVIEW,
                 Instant.now(),
                 "SYSTEM"
         );
