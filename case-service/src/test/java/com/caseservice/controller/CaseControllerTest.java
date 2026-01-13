@@ -10,11 +10,15 @@ import com.caseservice.security.JwtService;
 import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.query.Page;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -93,18 +97,24 @@ class CaseControllerTest {
         UUID userId = UUID.randomUUID();
         var auth = authUser(userId);
 
-        when(caseService.getAllForUser(userId)).thenReturn(new ArrayList<>(cases));
+        var page = new PageImpl<>(cases, PageRequest.of(0, 20), cases.size());
+        when(caseService.getAllForUser(eq(userId), any(Pageable.class))).thenReturn(page);
 
-        //then
+        // then
         mockMvc.perform(get("/api/cases")
-                        .header("Accept", "application/json")
+                        .accept(MediaType.APPLICATION_JSON)
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
-                .andExpect(MockMvcResultMatchers.jsonPath("$").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].caseNumber").value("CASE-2026-001"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$[1].caseNumber").value("CASE-2026-002"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2));
+
+                // content
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isNotEmpty())
+                .andExpect(jsonPath("$.content[0].caseNumber").value("CASE-2026-001"))
+                .andExpect(jsonPath("$.content[1].caseNumber").value("CASE-2026-002"))
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.number").value(0));
     }
 
     @Test
@@ -113,14 +123,22 @@ class CaseControllerTest {
         UUID userId = UUID.randomUUID();
         var auth = authUser(userId);
 
-        when(caseService.getAllForUser(userId)).thenReturn(List.of());
+        var emptyPage = new PageImpl<CaseEntityDto>(
+                List.of(),
+                PageRequest.of(0, 20),
+                0
+        );
+
+        when(caseService.getAllForUser(eq(userId), any(Pageable.class)))
+                .thenReturn(emptyPage);
 
         mockMvc.perform(get("/api/cases")
                         .header("Accept", "application/json")
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
-                .andExpect(MockMvcResultMatchers.jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
@@ -233,25 +251,27 @@ class CaseControllerTest {
     }
 
     @Test
-    void shouldReturnMyCases() throws Exception {
+    void shouldReturnMyCasesPaged() throws Exception {
+        // given
         UUID userId = UUID.randomUUID();
+        var auth = authUser(userId);
 
-        var principal = new UserPrincipal(userId, "test@test.com");
-        var auth = new UsernamePasswordAuthenticationToken(
-                principal,
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
-        );
+        var page = new PageImpl<>(cases, PageRequest.of(0, 20), cases.size());
+        when(caseService.getAllForUser(eq(userId), any(Pageable.class))).thenReturn(page);
 
-        when(caseService.getAllForUser(userId)).thenReturn(cases);
-
-        mockMvc.perform(get("/api/cases")
-                        .with(authentication(auth))
-                        .accept(MediaType.APPLICATION_JSON))
+        // then
+        mockMvc.perform(get("/api/cases?page=0&size=20")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].caseNumber").value("CASE-2026-001"))
-                .andExpect(jsonPath("$[1].caseNumber").value("CASE-2026-002"));
+                // sprawdzamy content
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].caseNumber").value("CASE-2026-001"))
+                .andExpect(jsonPath("$.content[1].caseNumber").value("CASE-2026-002"))
+                // metadata page
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.number").value(0));
     }
 }

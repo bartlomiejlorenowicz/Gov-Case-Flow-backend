@@ -7,7 +7,6 @@ import com.caseservice.domain.CaseStatusTransitions;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
-import com.caseservice.event.CaseEventPublisher;
 import com.caseservice.event.CaseStatusChangedEvent;
 import com.caseservice.exceptions.CaseAlreadyExistsException;
 import com.caseservice.exceptions.CaseNotFoundException;
@@ -18,12 +17,13 @@ import com.caseservice.repository.CaseStatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -62,19 +62,15 @@ public class CaseService {
     }
 
     @Transactional(readOnly = true)
-    public List<CaseEntityDto> getAllForUser(UUID userId) {
-        return caseRepository.findAllByCreatedByUserId(userId)
-                .stream()
-                .map(mapper::toDto)
-                .toList();
+    public Page<CaseEntityDto> getAllForUser(UUID userId, Pageable pageable) {
+        return caseRepository.findAllByCreatedByUserId(userId, pageable)
+                .map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)
-    public List<CaseEntityDto> getAll() {
-        return caseRepository.findAll()
-                .stream()
-                .map(mapper::toDto)
-                .toList();
+    public Page<CaseEntityDto> getAll(Pageable pageable) {
+        return caseRepository.findAll(pageable)
+                .map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)

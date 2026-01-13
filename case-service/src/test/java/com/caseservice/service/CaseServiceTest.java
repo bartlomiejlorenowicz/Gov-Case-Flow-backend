@@ -4,6 +4,7 @@ import com.caseservice.domain.CaseEntity;
 import com.caseservice.domain.CaseStatus;
 import com.caseservice.domain.CaseStatusHistory;
 import com.caseservice.dto.request.CreateCaseRequest;
+import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.event.CaseEventPublisher;
 import com.caseservice.event.CaseStatusChangedEvent;
@@ -18,11 +19,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Clock;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -47,6 +55,9 @@ class CaseServiceTest {
 
     @Mock
     private CaseEventPublisher caseEventPublisher;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Test
     void shouldCreateCaseSuccessfully() {
@@ -83,6 +94,41 @@ class CaseServiceTest {
         verify(caseRepository).save(any(CaseEntity.class));
         verify(caseMapper).toResponse(savedEntity);
     }
+
+    @Test
+    void shouldReturnPagedCasesForUser() {
+        // given
+        UUID userId = UUID.randomUUID();
+        Pageable pageable = PageRequest.of(0, 20);
+
+        List<CaseEntity> entities = List.of(
+                CaseEntity.builder().id(UUID.randomUUID()).caseNumber("CASE-1").build(),
+                CaseEntity.builder().id(UUID.randomUUID()).caseNumber("CASE-2").build()
+        );
+
+        Page<CaseEntity> entityPage = new PageImpl<>(entities, pageable, entities.size());
+
+        when(caseRepository.findAllByCreatedByUserId(userId, pageable)).thenReturn(entityPage);
+
+        when(caseMapper.toDto(any(CaseEntity.class))).thenAnswer(inv -> {
+            CaseEntity e = inv.getArgument(0);
+            return CaseEntityDto.builder()
+                    .id(e.getId())
+                    .caseNumber(e.getCaseNumber())
+                    .build();
+        });
+
+        // when
+        Page<CaseEntityDto> result = caseService.getAllForUser(userId, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).getCaseNumber()).isEqualTo("CASE-1");
+        assertThat(result.getTotalElements()).isEqualTo(2);
+
+        verify(caseRepository).findAllByCreatedByUserId(userId, pageable);
+    }
+
 
     @Test
     void shouldThrowExceptionWhenCaseNumberAlreadyExists() {
@@ -147,6 +193,7 @@ class CaseServiceTest {
         caseService.changeStatus(caseId, CaseStatus.IN_REVIEW);
 
         assertEquals(CaseStatus.IN_REVIEW, entity.getStatus());
+        verify(eventPublisher).publishEvent(any(CaseStatusChangedEvent.class));
     }
 
     @Test
@@ -230,7 +277,7 @@ class CaseServiceTest {
 
         // then
         verify(historyRepository).save(any(CaseStatusHistory.class));
-        verify(caseEventPublisher).publishStatusChanged(any(CaseStatusChangedEvent.class));
+        verify(eventPublisher).publishEvent(any(CaseStatusChangedEvent.class));
     }
 
 }

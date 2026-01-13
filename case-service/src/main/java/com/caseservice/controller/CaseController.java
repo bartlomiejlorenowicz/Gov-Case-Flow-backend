@@ -8,6 +8,9 @@ import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,14 +45,15 @@ public class CaseController {
 
     @GetMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<CaseEntityDto>> getMyCases(@AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(caseService.getAllForUser(principal.userId()));
+    public ResponseEntity<Page<CaseEntityDto>> getMyCases(@AuthenticationPrincipal UserPrincipal principal,
+                                                          Pageable pageable) {
+        return ResponseEntity.ok(caseService.getAllForUser(principal.userId(), pageable));
     }
 
     @GetMapping("/all")
     @PreAuthorize("hasAnyRole('ADMIN','OFFICER')")
-    public ResponseEntity<List<CaseEntityDto>> getAllCases() {
-        return ResponseEntity.ok(caseService.getAll());
+    public ResponseEntity<Page<CaseEntityDto>> getAllCases(@PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+        return ResponseEntity.ok(caseService.getAll(pageable));
     }
 
     @GetMapping("/{caseId}")
