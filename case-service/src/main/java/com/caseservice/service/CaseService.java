@@ -17,6 +17,7 @@ import com.caseservice.repository.CaseRepository;
 import com.caseservice.repository.CaseStatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,7 @@ public class CaseService {
 
     private final CaseStatusHistoryRepository historyRepository;
 
-    private final CaseEventPublisher caseEventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public CaseResponse createCase(CreateCaseRequest createCaseRequest, UUID userId) {
@@ -117,7 +118,7 @@ public class CaseService {
                         "SYSTEM"
                 );
 
-        caseEventPublisher.publishStatusChanged(event);
+        eventPublisher.publishEvent(event);
     }
 
     @Transactional
