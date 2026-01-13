@@ -1,4 +1,4 @@
-package com.notificationservice.event;
+package com.govcaseflow.events.auth;
 
 import java.time.Instant;
 import java.util.UUID;

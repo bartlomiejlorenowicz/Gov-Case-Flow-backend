@@ -1,6 +1,4 @@
-package com.auditservice.event;
-
-import com.auditservice.domain.CaseStatus;
+package com.govcaseflow.events.cases;
 
 import java.time.Instant;
 import java.util.UUID;

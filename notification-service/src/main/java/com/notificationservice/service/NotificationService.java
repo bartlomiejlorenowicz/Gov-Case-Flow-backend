@@ -1,6 +1,6 @@
 package com.notificationservice.service;
 
-import com.notificationservice.event.CaseStatusChangedEvent;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

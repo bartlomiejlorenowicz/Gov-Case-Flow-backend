@@ -10,7 +10,6 @@ import com.caseservice.security.JwtService;
 import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hibernate.query.Page;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -32,7 +30,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -264,12 +261,10 @@ class CaseControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
-                // sprawdzamy content
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].caseNumber").value("CASE-2026-001"))
                 .andExpect(jsonPath("$.content[1].caseNumber").value("CASE-2026-002"))
-                // metadata page
                 .andExpect(jsonPath("$.totalElements").value(2))
                 .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.number").value(0));

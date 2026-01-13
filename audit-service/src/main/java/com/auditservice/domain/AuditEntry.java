@@ -2,7 +2,7 @@ package com.auditservice.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import com.govcaseflow.events.cases.CaseStatus;
 import java.time.Instant;
 import java.util.UUID;
 

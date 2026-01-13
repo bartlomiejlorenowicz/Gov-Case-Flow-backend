@@ -1,7 +1,7 @@
 package com.notificationservice.listener;
 
 import com.notificationservice.config.NotificationAmqpConfig;
-import com.notificationservice.event.CaseStatusChangedEvent;
+import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.context.annotation.Profile;

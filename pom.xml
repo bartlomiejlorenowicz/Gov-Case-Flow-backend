@@ -19,6 +19,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>gov-case-flow-events</module>
         <module>case-service</module>
         <module>audit-service</module>
         <module>notification-service</module>
@@ -28,5 +29,15 @@
     <properties>
         <java.version>17</java.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com</groupId>
+                <artifactId>gov-case-flow-events</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 </project>

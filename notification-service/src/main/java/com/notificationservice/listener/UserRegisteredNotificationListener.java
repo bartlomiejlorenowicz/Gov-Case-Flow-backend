@@ -1,7 +1,7 @@
 package com.notificationservice.listener;
 
 import com.notificationservice.config.AuthNotificationAmqpConfig;
-import com.notificationservice.event.UserRegisteredEvent;
+import com.govcaseflow.events.auth.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
