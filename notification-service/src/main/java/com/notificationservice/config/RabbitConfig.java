@@ -8,14 +8,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabbitConfig {
+public class  RabbitConfig {
 
     @Bean
-    public Jackson2JsonMessageConverter jackson2Converter() {
-        ObjectMapper mapper = JsonMapper.builder()
+    public ObjectMapper objectMapper() {
+        return JsonMapper.builder()
                 .addModule(new JavaTimeModule())
                 .build();
+    }
 
+    @Bean
+    public Jackson2JsonMessageConverter jackson2Converter(ObjectMapper mapper) {
         return new Jackson2JsonMessageConverter(mapper);
     }
 }

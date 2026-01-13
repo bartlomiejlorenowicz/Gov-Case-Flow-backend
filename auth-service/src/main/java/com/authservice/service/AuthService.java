@@ -6,11 +6,13 @@ import com.authservice.domain.User;
 import com.authservice.dto.request.LoginRequest;
 import com.authservice.dto.request.RegisterRequest;
 import com.authservice.dto.response.AuthResponse;
+import com.authservice.event.UserRegisteredEvent;
 import com.authservice.exception.InvalidCredentialsException;
 import com.authservice.exception.UserAlreadyExistsException;
 import com.authservice.repository.UserRepository;
 import com.authservice.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ public class AuthService {
     private final Clock clock;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -45,6 +48,13 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        eventPublisher.publishEvent(
+                new UserRegisteredEvent(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getCreatedAt()
+                ));
     }
 
     public AuthResponse login(LoginRequest request) {
