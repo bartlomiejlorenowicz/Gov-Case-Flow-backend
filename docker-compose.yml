@@ -3,16 +3,18 @@ services:
     image: postgres:17
     container_name: case-postgres
     ports:
-      - "5432:5432"
+      - "${CASE_DB_PORT}:5432"
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: case_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ${CASE_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d case_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${CASE_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -20,17 +22,19 @@ services:
   audit-postgres:
     image: postgres:17
     container_name: audit-postgres
+    ports:
+      - "${AUDIT_DB_PORT}:5432"
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: audit_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ${AUDIT_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - audit_pgdata:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d audit_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${AUDIT_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,8 +43,8 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_PORT}:${RABBITMQ_INTERNAL_PORT}"
+      - "${RABBITMQ_UI_PORT}:15672"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
@@ -54,24 +58,21 @@ services:
       context: ./case-service
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "${CASE_SERVICE_PORT}:8080"
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep UP || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/case_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${CASE_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_INTERNAL_PORT}
 
   audit-service:
     container_name: audit-service
@@ -79,37 +80,36 @@ services:
       context: ./audit-service
       dockerfile: Dockerfile
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep UP || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+    env_file:
+      - .env
     depends_on:
       audit-postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://audit-postgres:5432/audit_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
+      SPRING_DATASOURCE_URL: jdbc:postgresql://audit-postgres:5432/${AUDIT_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_INTERNAL_PORT}
 
   auth-postgres:
     image: postgres:17
     container_name: auth-postgres
-    environment:
-      POSTGRES_DB: auth_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
     ports:
-      - "5434:5432"
+      - "${AUTH_DB_PORT}:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${AUTH_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - auth_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d auth_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${AUTH_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -120,39 +120,37 @@ services:
       context: ./auth-service
       dockerfile: Dockerfile
     ports:
-      - "8081:8080"
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep UP || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - "${AUTH_SERVICE_PORT}:8080"
+    restart: unless-stopped
+    env_file:
+      - .env
     depends_on:
       auth-postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/auth_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_INTERNAL_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
 
   notification-service:
     container_name: notification-service
     build:
       context: ./notification-service
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep UP || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+    restart: unless-stopped
+    env_file:
+      - .env
     depends_on:
       rabbitmq:
         condition: service_healthy
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_INTERNAL_PORT}
 
 volumes:
   pgdata:

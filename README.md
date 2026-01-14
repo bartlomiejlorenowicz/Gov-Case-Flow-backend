@@ -54,88 +54,113 @@ flowchart LR
   CASE --> CDB
   AUDIT --> DDB 
 ```
+
 ##  ⚙️ Tech stack
-Java 17
-
-Spring Boot
-
-Spring Security + JWT
-
-PostgreSQL 17
-
-RabbitMQ 3 (management)
-
-Liquibase
-
-Maven multi-module
-
-Docker + Docker Compose
-
-GitHub Actions CI
-
-Build & Test on JDK 17 and JDK 21 (matrix)
-
-Docker image build for all services (Buildx + cache)
+- Java 17
+- Spring Boot
+- Spring Security + JWT
+- PostgreSQL 17
+- RabbitMQ 3 (management)
+- Liquibase
+- Maven multi-module
+- Docker + Docker Compose
+- GitHub Actions CI
+- Build & Test on JDK 17 and JDK 21 (matrix)
+- Docker image build for all services (Buildx + cache)
 
 ## ✅ Features
-Auth
-user registration
 
-user login
+### Auth
+- user registration
+- user login
+- JWT-based authentication / authorization
 
-JWT-based authentication / authorization
+### Case management
+- create case
+- update case (PATCH)
+- delete case
+- get single case / list cases (pagination)
+- assign case to user
+- validated status transitions (workflow)
+- status history persistence
+- publishes domain events (RabbitMQ)
 
-Case management
-create case
+### Audit
+- listens for domain events
+- stores audit trail in PostgreSQL
 
-update case (PATCH)
+### Notifications
+- listens for domain events
+- currently logs received events (planned: email/in-app notifications)
 
-delete case
+## ⚡ Run the project in 2–3 minutes (Docker)
 
-get single case / list cases (pagination)
+The easiest way to run the project locally is using **Docker Compose** (no manual database setup required).
 
-assign case to user
+### 1️⃣ Clone the repository 
 
-validated status transitions (workflow)
+```bash
 
-status history persistence
+git clone https://github.com/bartlomiejlorenowicz/Gov-Case-Flow-backend.git
+cd Gov-Case-Flow-backend
+```
 
-publishes domain events (RabbitMQ)
+### 2️⃣ Start the application
+``` bash
 
-Audit
-listens for domain events
+docker compose up --build
 
-stores audit trail in PostgreSQL
+This will start:
 
-Notifications
-listens for domain events
+PostgreSQL databases (auth_db, case_db, audit_db)
 
-currently logs received events (planned: email/in-app notifications)
+RabbitMQ (with management UI)
+
+Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
+
+```
+
+3️⃣ Access the application
+```bash
+
+Case Service Swagger UI: http://localhost:8080/swagger-ui/index.html
+
+Auth Service Swagger UI: http://localhost:8081/swagger-ui/index.html
+
+RabbitMQ Management UI: http://localhost:15672
+
+```
 
 ## 🐳 Run locally (Docker Compose)
 ✅ Recommended: run everything using Docker Compose.
 
-Start
-bash
-Copy code
-docker compose up --build
-Services & ports
-Service	Port (host → container)	Notes
-case-service	8080 → 8080	REST API + Actuator
-auth-service	8081 → 8080	REST API + Actuator
-audit-service	-	internal service + Actuator
-notification-service	-	internal service + Actuator
-postgres (case_db)	5432 → 5432	case-service DB
-audit-postgres (audit_db)	5433 → 5432	audit-service DB
-auth-postgres (auth_db)	5434 → 5432	auth-service DB
-rabbitmq	5672, 15672	AMQP + Management UI
+### Start
+- bash Copy code
+- docker compose up --build
+### Services & ports:
+| Service | Port (host → container) | Notes |
+|--------|--------------------------|------|
+| case-service | `8080 → 8080` | REST API + Actuator |
+| auth-service | `8081 → 8080` | REST API + Actuator |
+| audit-service | - | internal service + Actuator |
+| notification-service | - | internal service + Actuator |
+| postgres (case_db) | `5432 → 5432` | case-service DB |
+| audit-postgres (audit_db) | `5433 → 5432` | audit-service DB |
+| auth-postgres (auth_db) | `5434 → 5432` | auth-service DB |
+| rabbitmq | `5672`, `15672` | AMQP + Management UI |
 
-Healthchecks
+### Healthchecks
 Docker Compose includes healthchecks:
 
-PostgreSQL: pg_isready
+- PostgreSQL: pg_isready
+- Services: GET /actuator/health
 
-Services: GET /actuator/health
+## 📚 Swagger / OpenAPI
+
+Swagger UI is available per service:
+
+- **Case Service:** http://localhost:8080/swagger-ui/index.html
+- **Auth Service:** http://localhost:8081/swagger-ui/index.html
 
 ## 🔑 Configuration
 Currently configuration is provided directly in docker-compose.yml.
@@ -148,52 +173,44 @@ Port: 5672
 
 Management UI: http://localhost:15672
 
-🔌 API (high-level)
-Auth (auth-service)
-POST /auth/register — register user
+## 🔌 API (high-level)
 
-POST /auth/login — login and obtain JWT
+Swagger UI:
+- **Case Service:** http://localhost:8080/swagger-ui/index.html
+- **Auth Service:** http://localhost:8081/swagger-ui/index.html
 
-Cases (case-service)
-POST /cases — create case
+### Main endpoints (examples)
 
-GET /cases — list cases (pagination)
+**Auth (auth-service)**
+- `POST /auth/register` — register user
+- `POST /auth/login` — login and obtain JWT
 
-GET /cases/{id} — get case by id
-
-PATCH /cases/{id} — update case / change status
-
-DELETE /cases/{id} — delete case
-
-PATCH /cases/{id}/assign — assign case to user
+**Cases (case-service)**
+- `POST /cases` — create case
+- `GET /cases` — list cases (pagination)
+- `PATCH /cases/{id}` — change status
 
 Exact endpoints may vary depending on controller implementation.
 
 ## 🧪 CI / Quality
-This repository uses GitHub Actions CI pipeline:
 
-build & test on JDK 17 and JDK 21
+This repository uses **GitHub Actions CI** pipeline:
 
-caching enabled for Maven dependencies
-
-Docker images built for all microservices (Buildx + GitHub Actions cache)
+- Build & test on **JDK 17 and JDK 21** (matrix)
+- Maven dependencies caching enabled
+- Docker images built for all microservices (**Buildx + GitHub Actions cache**)
 
 Workflow file:
-
-.github/workflows/ci.yml
+- `.github/workflows/ci.yml`
 
 ## 🗺️ Roadmap
- add .env + .env.example
 
- add OpenAPI/Swagger documentation
-
- add Testcontainers integration tests (Postgres + RabbitMQ)
-
- improve observability (Actuator metrics)
-
- correlation IDs / tracing in logs
-
- implement real notification delivery (email / in-app)
+- [ ] add `.env` + `.env.example`
+- [x] add OpenAPI/Swagger documentation
+- [ ] add Testcontainers integration tests (Postgres + RabbitMQ)
+- [ ] improve observability (Actuator metrics)
+- [ ] correlation IDs / tracing in logs
+- [ ] implement real notification delivery (email / in-app)
 
 ## 👤 Author
 Created by Bartłomiej Lorenowicz
