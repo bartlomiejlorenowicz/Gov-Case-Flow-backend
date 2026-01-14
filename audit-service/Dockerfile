@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN apk add --no-cache curl
 
-COPY target/audit-service-0.0.1-SNAPSHOT.jar app.jar
+COPY target/*.jar app.jar
 
 EXPOSE 8080
 
