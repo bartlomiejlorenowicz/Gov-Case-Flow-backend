@@ -102,12 +102,12 @@ Run the project locally in a few minutes using Docker Compose (no manual DB setu
 
 git clone https://github.com/bartlomiejlorenowicz/Gov-Case-Flow-backend.git
 cd Gov-Case-Flow-backend
-```
 
 ### 2️⃣ Start the application
-``` bash
 
 docker compose up --build
+
+```bash
 
 This will start:
 
@@ -120,15 +120,12 @@ Spring Boot microservices (auth-service, case-service, audit-service, notificati
 ```
 
 3️⃣ Access the application
-```bash
 
-Case Service Swagger UI: http://localhost:8080/swagger-ui/index.html
+- Case Service Swagger UI: http://localhost:8080/swagger-ui/index.html
 
-Auth Service Swagger UI: http://localhost:8081/swagger-ui/index.html
+- Auth Service Swagger UI: http://localhost:8081/swagger-ui/index.html
 
-RabbitMQ Management UI: http://localhost:15672
-
-```
+- RabbitMQ Management UI: http://localhost:15672
 
 ### Services & ports:
 | Service | Port (host → container) | Notes |
