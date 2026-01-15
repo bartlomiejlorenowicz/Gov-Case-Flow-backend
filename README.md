@@ -164,15 +164,7 @@ Swagger UI is available per service:
 - **Audit Service:** http://localhost:8082/swagger-ui/index.html
 
 ## 🔑 Configuration
-Currently configuration is provided directly in docker-compose.yml.
-Planned improvement: .env support.
-
-RabbitMQ
-Host: rabbitmq
-
-Port: 5672
-
-Management UI: http://localhost:15672
+Configuration is provided via .env (see .env.example) and docker-compose.yml.
 
 ## 🔌 API (high-level)
 
