@@ -55,7 +55,7 @@ flowchart LR
   AUDIT --> DDB 
 ```
 
-##  ⚙️ Tech stack
+## ⚙️ Tech stack
 - Java 17
 - Spring Boot
 - Spring Security + JWT
@@ -110,12 +110,10 @@ docker compose up --build
 This will start:
 
 - PostgreSQL databases (auth_db, case_db, audit_db)
-
 - RabbitMQ (with management UI)
-
 - Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
 
-3️⃣ Access the application
+### 3️⃣ Access the application
 
 - Case Service Swagger UI: http://localhost:8080/swagger-ui/index.html
 
