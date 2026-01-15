@@ -109,11 +109,11 @@ docker compose up --build
 ```
 This will start:
 
-PostgreSQL databases (auth_db, case_db, audit_db)
+- PostgreSQL databases (auth_db, case_db, audit_db)
 
-RabbitMQ (with management UI)
+- RabbitMQ (with management UI)
 
-Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
+- Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
 
 3️⃣ Access the application
 
