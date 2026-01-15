@@ -95,7 +95,7 @@ flowchart LR
 
 ## ⚡ Run the project in 2–3 minutes (Docker)
 
-The easiest way to run the project locally is using **Docker Compose** (no manual database setup required).
+Run the project locally in a few minutes (Docker)
 
 ### 1️⃣ Clone the repository 
 
@@ -195,15 +195,6 @@ This repository uses **GitHub Actions CI** pipeline:
 
 Workflow file:
 - `.github/workflows/ci.yml`
-
-## 🗺️ Roadmap
-
-- [ ] add `.env` + `.env.example`
-- [x] add OpenAPI/Swagger documentation
-- [ ] add Testcontainers integration tests (Postgres + RabbitMQ)
-- [ ] improve observability (Actuator metrics)
-- [ ] correlation IDs / tracing in logs
-- [ ] implement real notification delivery (email / in-app)
 
 ## 👤 Author
 Created by Bartłomiej Lorenowicz
