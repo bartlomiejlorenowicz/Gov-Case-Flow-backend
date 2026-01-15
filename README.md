@@ -97,18 +97,14 @@ flowchart LR
 Run the project locally in a few minutes using Docker Compose (no manual DB setup required).
 
 ### 1️⃣ Clone the repository 
-
 ```bash
-
 git clone https://github.com/bartlomiejlorenowicz/Gov-Case-Flow-backend.git
 cd Gov-Case-Flow-backend
 ```
 
-
 ### 2️⃣ Start the application
 
 ```bash
-
 docker compose up --build
 ```
 This will start:
@@ -118,8 +114,6 @@ PostgreSQL databases (auth_db, case_db, audit_db)
 RabbitMQ (with management UI)
 
 Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
-
-```
 
 3️⃣ Access the application
 
