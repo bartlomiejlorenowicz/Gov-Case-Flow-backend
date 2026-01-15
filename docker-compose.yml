@@ -55,8 +55,8 @@ services:
   case-service:
     container_name: case-service
     build:
-      context: ./case-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: case-service/Dockerfile
     ports:
       - "${CASE_SERVICE_PORT}:8080"
     restart: unless-stopped
@@ -77,8 +77,8 @@ services:
   audit-service:
     container_name: audit-service
     build:
-      context: ./audit-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: audit-service/Dockerfile
     ports:
       - "${AUDIT_SERVICE_PORT}:8080"
     restart: unless-stopped
@@ -119,8 +119,8 @@ services:
   auth-service:
     container_name: auth-service
     build:
-      context: ./auth-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: auth-service/Dockerfile
     ports:
       - "${AUTH_SERVICE_PORT}:8080"
     restart: unless-stopped
@@ -143,7 +143,8 @@ services:
   notification-service:
     container_name: notification-service
     build:
-      context: ./notification-service
+      context: .
+      dockerfile: notification-service/Dockerfile
     restart: unless-stopped
     env_file:
       - .env
