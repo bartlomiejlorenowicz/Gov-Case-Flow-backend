@@ -79,6 +79,8 @@ services:
     build:
       context: ./audit-service
       dockerfile: Dockerfile
+    ports:
+      - "${AUDIT_SERVICE_PORT}:8080"
     restart: unless-stopped
     env_file:
       - .env

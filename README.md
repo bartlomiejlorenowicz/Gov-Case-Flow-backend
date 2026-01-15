@@ -139,15 +139,15 @@ RabbitMQ Management UI: http://localhost:15672
 - docker compose up --build
 ### Services & ports:
 | Service | Port (host → container) | Notes |
-|--------|--------------------------|------|
-| case-service | `8080 → 8080` | REST API + Actuator |
-| auth-service | `8081 → 8080` | REST API + Actuator |
-| audit-service | - | internal service + Actuator |
-| notification-service | - | internal service + Actuator |
-| postgres (case_db) | `5432 → 5432` | case-service DB |
-| audit-postgres (audit_db) | `5433 → 5432` | audit-service DB |
-| auth-postgres (auth_db) | `5434 → 5432` | auth-service DB |
-| rabbitmq | `5672`, `15672` | AMQP + Management UI |
+|--------|-------------------------|------|
+| case-service | `8080 → 8080`           | REST API + Actuator |
+| auth-service | `8081 → 8080`           | REST API + Actuator |
+| audit-service | `8082 → 8080`           | REST API + Swagger + Actuator |
+| notification-service | -                       | internal service + Actuator |
+| postgres (case_db) | `5432 → 5432`           | case-service DB |
+| audit-postgres (audit_db) | `5433 → 5432`           | audit-service DB |
+| auth-postgres (auth_db) | `5434 → 5432`           | auth-service DB |
+| rabbitmq | `5672`, `15672`         | AMQP + Management UI |
 
 ### Healthchecks
 Docker Compose includes healthchecks:
@@ -161,6 +161,7 @@ Swagger UI is available per service:
 
 - **Case Service:** http://localhost:8080/swagger-ui/index.html
 - **Auth Service:** http://localhost:8081/swagger-ui/index.html
+- **Audit Service:** http://localhost:8082/swagger-ui/index.html
 
 ## 🔑 Configuration
 Currently configuration is provided directly in docker-compose.yml.
