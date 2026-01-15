@@ -130,11 +130,6 @@ RabbitMQ Management UI: http://localhost:15672
 
 ```
 
-## 🐳 Run locally (Docker Compose)
-✅ Recommended: run everything using Docker Compose.
-
-### Start
-- docker compose up --build
 ### Services & ports:
 | Service | Port (host → container) | Notes |
 |--------|-------------------------|------|
