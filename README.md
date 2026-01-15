@@ -102,13 +102,14 @@ Run the project locally in a few minutes using Docker Compose (no manual DB setu
 
 git clone https://github.com/bartlomiejlorenowicz/Gov-Case-Flow-backend.git
 cd Gov-Case-Flow-backend
+```
 
 ### 2️⃣ Start the application
 
+```bash
 docker compose up --build
 
 ```bash
-
 This will start:
 
 PostgreSQL databases (auth_db, case_db, audit_db)
