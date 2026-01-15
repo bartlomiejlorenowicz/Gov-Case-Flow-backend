@@ -93,9 +93,8 @@ flowchart LR
 - listens for domain events
 - currently logs received events (planned: email/in-app notifications)
 
-## ⚡ Run the project in 2–3 minutes (Docker)
-
-Run the project locally in a few minutes (Docker)
+## ⚡ Run locally (Docker)
+Run the project locally in a few minutes using Docker Compose (no manual DB setup required).
 
 ### 1️⃣ Clone the repository 
 
@@ -135,7 +134,6 @@ RabbitMQ Management UI: http://localhost:15672
 ✅ Recommended: run everything using Docker Compose.
 
 ### Start
-- bash Copy code
 - docker compose up --build
 ### Services & ports:
 | Service | Port (host → container) | Notes |
