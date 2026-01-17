@@ -1,11 +1,17 @@
 package com.auditservice.service;
 
 import com.auditservice.domain.AuditEntry;
+import com.auditservice.dto.response.AuditEntryDto;
+import com.auditservice.mapper.AuditEntryMapper;
 import com.auditservice.repository.AuditRepository;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -13,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class AuditService {
 
     private final AuditRepository repository;
+    private final AuditEntryMapper mapper;
 
     public void save(CaseStatusChangedEvent event) {
         log.info("Saving audit entry for caseId={}, {} -> {}",
@@ -27,5 +34,13 @@ public class AuditService {
                         .build()
         );
         log.info("Audit entry saved successfully for caseId={}", event.caseId());
+    }
+
+    public Page<AuditEntryDto> getAll(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDto);
+    }
+
+    public Page<AuditEntryDto> getByCaseId(UUID caseId, Pageable pageable) {
+        return repository.findAllByCaseId(caseId, pageable).map(mapper::toDto);
     }
 }

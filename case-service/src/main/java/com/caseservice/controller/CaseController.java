@@ -8,6 +8,7 @@ import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -44,15 +45,16 @@ public class CaseController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Page<CaseEntityDto>> getMyCases(@AuthenticationPrincipal UserPrincipal principal,
-                                                          Pageable pageable) {
+    public ResponseEntity<Page<CaseEntityDto>> getMyCases(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt") Pageable pageable
+    ) {
         return ResponseEntity.ok(caseService.getAllForUser(principal.userId(), pageable));
     }
 
     @GetMapping("/all")
     @PreAuthorize("hasAnyRole('ADMIN','OFFICER')")
-    public ResponseEntity<Page<CaseEntityDto>> getAllCases(@PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+    public ResponseEntity<Page<CaseEntityDto>> getAllCases(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(caseService.getAll(pageable));
     }
 

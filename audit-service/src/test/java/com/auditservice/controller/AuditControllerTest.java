@@ -1,6 +1,6 @@
 package com.auditservice.controller;
 
-import com.auditservice.config.SecurityConfig;
+import com.auditservice.security.SecurityConfig;
 import com.auditservice.domain.AuditEntry;
 import com.auditservice.repository.AuditRepository;
 import com.govcaseflow.events.cases.CaseStatus;

@@ -9,5 +9,6 @@
     <include file="db/changelog/001-create-users.xml"/>
     <include file="db/changelog/002-create-refresh-tokens.xml"/>
     <include file="003-add-revoked-column.xml" relativeToChangelogFile="true"/>
+    <include file="001-seed-admin.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
