@@ -174,6 +174,32 @@ Port: 5672
 
 Management UI: http://localhost:15672
 
+## 🎬 Demo (Swagger UI)
+
+> All admin endpoints are secured with **JWT + ROLE_ADMIN**.  
+> Every status change publishes an event and is persisted in the **audit trail**.
+
+### 1) Authentication (JWT)
+Admin logs in via `POST /auth/login`, receives JWT token and uses Swagger **Authorize** to access secured endpoints.
+![01 Auth](docs/gifs/01-auth-login.gif)
+
+### 2) Create Case
+Creates a new case using secured endpoint (ROLE_ADMIN required).
+![02 Create Case](docs/gifs/02-create-case.gif)
+
+### 3) Get All Cases
+Fetches all cases to confirm the new record and current state.
+![03 Get All](docs/gifs/03-get-all-cases.gif)
+
+### 4) Update Case Status
+Updates case status (e.g. SUBMITTED → IN_REVIEW).
+![04 Status](docs/gifs/04-update-case-status.gif)
+
+### 5) Audit Log Verification
+Audit log confirms who changed what and when.
+![05 Audit](docs/gifs/05-audit-log.gif)
+
+
 ## 🔌 API (high-level)
 
 Swagger UI:
