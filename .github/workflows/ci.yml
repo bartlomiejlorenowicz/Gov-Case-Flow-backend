@@ -60,15 +60,13 @@ jobs:
           java-version: 17
           cache: maven
 
-      - name: Build jars (skip tests)
-        run: mvn -B -ntp -DskipTests clean package
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build case-service image
         uses: docker/build-push-action@v6
         with:
-          context: ./case-service
+          context: .
           file: ./case-service/Dockerfile
           push: false
           tags: gov-case-flow/case-service:ci
@@ -78,7 +76,7 @@ jobs:
       - name: Build audit-service image
         uses: docker/build-push-action@v6
         with:
-          context: ./audit-service
+          context: .
           file: ./audit-service/Dockerfile
           push: false
           tags: gov-case-flow/audit-service:ci
@@ -88,7 +86,7 @@ jobs:
       - name: Build auth-service image
         uses: docker/build-push-action@v6
         with:
-          context: ./auth-service
+          context: .
           file: ./auth-service/Dockerfile
           push: false
           tags: gov-case-flow/auth-service:ci
@@ -98,7 +96,7 @@ jobs:
       - name: Build notification-service image
         uses: docker/build-push-action@v6
         with:
-          context: ./notification-service
+          context: .
           file: ./notification-service/Dockerfile
           push: false
           tags: gov-case-flow/notification-service:ci
