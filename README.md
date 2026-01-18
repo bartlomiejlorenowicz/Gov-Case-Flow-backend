@@ -55,7 +55,7 @@ flowchart LR
   AUDIT --> DDB 
 ```
 
-##  ⚙️ Tech stack
+## ⚙️ Tech stack
 - Java 17
 - Spring Boot
 - Spring Security + JWT
@@ -100,7 +100,6 @@ flowchart LR
 ### 1️⃣ Clone the repository
 
 ```bash
-
 git clone https://github.com/bartlomiejlorenowicz/Gov-Case-Flow-backend.git
 cd Gov-Case-Flow-backend
 ```
