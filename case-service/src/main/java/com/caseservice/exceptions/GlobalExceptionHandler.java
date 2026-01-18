@@ -22,4 +22,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleCaseNotFoundException(CaseNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+
+    @ExceptionHandler(CaseAlreadyAssignedException.class)
+    public ResponseEntity<String> handleCaseAlreadyAssignedException(CaseAlreadyAssignedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(CaseAssignmentNotAllowedException.class)
+    public ResponseEntity<String> handleCaseAssignmentNotAllowedException(CaseAssignmentNotAllowedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(CaseAccessDeniedException.class)
+    public ResponseEntity<String> handleCaseAccessDeniedException(CaseAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
 }

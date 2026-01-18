@@ -9,6 +9,7 @@
     <include file="changelog/db.changelog-create-cases.xml"/>
     <include file="changelog/db.changelog-create-case-status-history.xml"/>
     <include file="changelog/db.changelog-add-created-by-user-id.xml"/>
+    <include file="changelog/db.changelog-add-assigned-officer.xml"/>
 
 </databaseChangeLog>
 

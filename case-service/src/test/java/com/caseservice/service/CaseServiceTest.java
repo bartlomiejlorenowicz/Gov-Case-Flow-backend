@@ -154,7 +154,7 @@ class CaseServiceTest {
 
         assertThrows(
                 CaseNotFoundException.class,
-                () -> caseService.changeStatus(caseId, CaseStatus.IN_REVIEW)
+                () -> caseService.changeStatus(caseId, CaseStatus.IN_REVIEW, UUID.randomUUID(), true)
         );
 
         verify(caseRepository).findById(caseId);
@@ -167,13 +167,14 @@ class CaseServiceTest {
         CaseEntity entity = CaseEntity.builder()
                 .id(caseId)
                 .status(CaseStatus.APPROVED)
+                .assignedOfficerId(caseId)
                 .build();
 
         when(caseRepository.findById(caseId)).thenReturn(Optional.of(entity));
 
         assertThrows(
                 InvalidCaseStatusTransitionException.class,
-                () -> caseService.changeStatus(caseId, CaseStatus.IN_REVIEW)
+                () -> caseService.changeStatus(caseId, CaseStatus.IN_REVIEW, UUID.randomUUID(), true)
         );
 
         verify(caseRepository).findById(caseId);
@@ -181,7 +182,9 @@ class CaseServiceTest {
 
     @Test
     void shouldChangeStatusSuccessfullyWhenTransitionIsAllowed() {
+        // given
         UUID caseId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
 
         CaseEntity entity = CaseEntity.builder()
                 .id(caseId)
@@ -190,9 +193,12 @@ class CaseServiceTest {
 
         when(caseRepository.findById(caseId)).thenReturn(Optional.of(entity));
 
-        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW);
+        // when
+        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW, adminId, true);
 
+        // then
         assertEquals(CaseStatus.IN_REVIEW, entity.getStatus());
+        verify(historyRepository).save(any(CaseStatusHistory.class));
         verify(eventPublisher).publishEvent(any(CaseStatusChangedEvent.class));
     }
 
@@ -239,6 +245,7 @@ class CaseServiceTest {
     void shouldSaveStatusHistoryWhenChangingStatus() {
         // given
         UUID caseId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
 
         CaseEntity entity = CaseEntity.builder()
                 .id(caseId)
@@ -248,12 +255,10 @@ class CaseServiceTest {
         when(caseRepository.findById(caseId)).thenReturn(Optional.of(entity));
 
         // when
-        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW);
+        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW, adminId, true);
 
         // then
         assertEquals(CaseStatus.IN_REVIEW, entity.getStatus());
-
-        // then
         verify(historyRepository).save(any(CaseStatusHistory.class));
     }
 
@@ -261,6 +266,7 @@ class CaseServiceTest {
     void shouldChangeCaseStatusAndSaveStatusHistory() {
         // given
         UUID caseId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
 
         CaseEntity entity = CaseEntity.builder()
                 .id(caseId)
@@ -270,12 +276,11 @@ class CaseServiceTest {
         when(caseRepository.findById(caseId)).thenReturn(Optional.of(entity));
 
         // when
-        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW);
+        caseService.changeStatus(caseId, CaseStatus.IN_REVIEW, adminId, true);
 
         // then
         assertEquals(CaseStatus.IN_REVIEW, entity.getStatus());
 
-        // then
         verify(historyRepository).save(any(CaseStatusHistory.class));
         verify(eventPublisher).publishEvent(any(CaseStatusChangedEvent.class));
     }

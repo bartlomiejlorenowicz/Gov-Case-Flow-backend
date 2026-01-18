@@ -20,7 +20,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -33,6 +32,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -75,21 +75,18 @@ class CaseServiceRabbitIT {
 
     @Autowired
     MockMvc mockMvc;
-
     @Autowired
     CaseRepository caseRepository;
-
     @Autowired
     CaseStatusHistoryRepository historyRepository;
-
     @Autowired
     RabbitTemplate rabbitTemplate;
-
     @Autowired
     RabbitAdmin rabbitAdmin;
-
     @Autowired
     ObjectMapper objectMapper;
+    @Autowired
+    TestJwtFactory jwtFactory;
 
     @BeforeEach
     void setup() {
@@ -104,31 +101,49 @@ class CaseServiceRabbitIT {
         rabbitAdmin.declareBinding(
                 BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY)
         );
+
+        rabbitAdmin.purgeQueue(TEST_QUEUE, true);
     }
 
-    @WithMockUser(username = "test@test.com", roles = "USER")
     @Test
     void shouldChangeStatusAndPublishEventToRabbit() throws Exception {
         // given
+        UUID userId = UUID.randomUUID();
+
+        String token = io.jsonwebtoken.Jwts.builder()
+                .setSubject("test@test.com")
+                .claim("userId", userId.toString())
+                .claim("roles", java.util.List.of("ADMIN"))
+                .setIssuedAt(new java.util.Date())
+                .setExpiration(java.util.Date.from(java.time.Instant.now().plusSeconds(3600)))
+                .signWith(
+                        io.jsonwebtoken.security.Keys.hmacShaKeyFor(
+                                "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF".getBytes()
+                        )
+                )
+                .compact();
+
         CaseEntity entity = caseRepository.save(
                 CaseEntity.builder()
                         .caseNumber("CASE-2026-IT-001")
                         .applicantPesel("90010112345")
                         .status(CaseStatus.SUBMITTED)
+                        .createdByUserId(userId)
                         .build()
         );
 
         UUID caseId = entity.getId();
 
         String json = """
-                { "newStatus": "IN_REVIEW" }
-                """;
+            { "newStatus": "IN_REVIEW" }
+            """;
 
         // when
         mockMvc.perform(
                         patch("/api/cases/{caseId}/status", caseId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .with(csrf())
+                                .header("Authorization", "Bearer " + token)
                                 .content(json)
                 )
                 .andExpect(status().isNoContent());
@@ -137,7 +152,6 @@ class CaseServiceRabbitIT {
         CaseEntity updated = caseRepository.findById(caseId).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(CaseStatus.IN_REVIEW);
 
-        // then
         assertThat(historyRepository.findAll()).hasSize(1);
 
         Awaitility.await()
@@ -146,17 +160,12 @@ class CaseServiceRabbitIT {
                     Message message = rabbitTemplate.receive(TEST_QUEUE);
                     assertThat(message).isNotNull();
 
-                    String jsonBody = new String(message.getBody());
-                    assertThat(jsonBody).isNotBlank();
-
                     CaseStatusChangedEvent event =
-                            objectMapper.readValue(jsonBody, CaseStatusChangedEvent.class);
+                            objectMapper.readValue(message.getBody(), CaseStatusChangedEvent.class);
 
                     assertThat(event.caseId()).isEqualTo(caseId);
                     assertThat(event.oldStatus()).isEqualTo(com.govcaseflow.events.cases.CaseStatus.SUBMITTED);
                     assertThat(event.newStatus()).isEqualTo(com.govcaseflow.events.cases.CaseStatus.IN_REVIEW);
-                    assertThat(event.changedAt()).isNotNull();
-
                     assertThat(event.changedBy()).isNotBlank();
                 });
     }

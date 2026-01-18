@@ -93,33 +93,43 @@ flowchart LR
 - listens for domain events
 - currently logs received events (planned: email/in-app notifications)
 
-## ⚡ Run locally (Docker)
-Run the project locally in a few minutes using Docker Compose (no manual DB setup required).
+## 🐳 Run locally (Docker Compose)
+✅ Recommended: run everything using Docker Compose.
+- The easiest way to run the project locally is using **Docker Compose** (no manual database setup required).
 
-### 1️⃣ Clone the repository 
+### 1️⃣ Clone the repository
+
 ```bash
 git clone https://github.com/bartlomiejlorenowicz/Gov-Case-Flow-backend.git
 cd Gov-Case-Flow-backend
 ```
 
-### 2️⃣ Start the application
+### 2️⃣ Configuration (.env)
+```bash
+
+cp .env.example .env
+```
+
+### 3️⃣ Start the application
 
 ```bash
+
 docker compose up --build
 ```
 This will start:
 
 - PostgreSQL databases (auth_db, case_db, audit_db)
+
 - RabbitMQ (with management UI)
+
 - Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
 
-### 3️⃣ Access the application
+### 4️⃣ Access the application
 
 - Case Service Swagger UI: http://localhost:8080/swagger-ui/index.html
-
 - Auth Service Swagger UI: http://localhost:8081/swagger-ui/index.html
-
-- RabbitMQ Management UI: http://localhost:15672
+- Audit Service Swagger UI: http://localhost:8082/swagger-ui/index.html
+- RabbitMQ Management UI: http://localhost:15672 (guest/guest)
 
 ### Services & ports:
 | Service | Port (host → container) | Notes |
@@ -147,8 +157,32 @@ Swagger UI is available per service:
 - **Auth Service:** http://localhost:8081/swagger-ui/index.html
 - **Audit Service:** http://localhost:8082/swagger-ui/index.html
 
-## 🔑 Configuration
-Configuration is provided via .env (see .env.example) and docker-compose.yml.
+## 🎬 Demo (Swagger UI)
+
+> Admin role is assigned locally for demo purposes (not stored in repository).
+> All admin endpoints are secured with **JWT + ROLE_ADMIN**.  
+> Every status change publishes an event and is persisted in the **audit trail**.
+
+### 1) Authentication (JWT)
+Admin logs in via `POST /auth/login`, receives JWT token and uses Swagger **Authorize** to access secured endpoints.
+![01 Auth](docs/gifs/01-auth-login.gif)
+
+### 2) Create Case
+Creates a new case using secured endpoint (ROLE_ADMIN required).
+![02 Create Case](docs/gifs/02-create-case.gif)
+
+### 3) Get All Cases
+Fetches all cases to confirm the new record and current state.
+![03 Get All](docs/gifs/03-get-all-cases.gif)
+
+### 4) Update Case Status
+Updates case status (e.g. SUBMITTED → IN_REVIEW).
+![04 Status](docs/gifs/04-update-case-status.gif)
+
+### 5) Audit Log Verification
+Audit log confirms who changed what and when.
+![05 Audit](docs/gifs/05-audit-log.gif)
+
 
 ## 🔌 API (high-level)
 
@@ -179,6 +213,15 @@ This repository uses **GitHub Actions CI** pipeline:
 
 Workflow file:
 - `.github/workflows/ci.yml`
+
+## 🗺️ Roadmap
+
+- [x] add `.env` + `.env.example`
+- [x] add OpenAPI/Swagger documentation
+- [x] add Testcontainers integration tests (Postgres + RabbitMQ)
+- [ ] improve observability (Actuator metrics)
+- [ ] correlation IDs / tracing in logs
+- [ ] implement real notification delivery (email / in-app)
 
 ## 👤 Author
 Created by Bartłomiej Lorenowicz

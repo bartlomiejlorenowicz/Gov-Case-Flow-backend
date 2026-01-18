@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Testcontainers
+@ActiveProfiles("test")
 class AuthServiceRabbitIT {
 
     static final String TEST_QUEUE = "test.auth.user-registered.queue";
@@ -81,8 +83,8 @@ class AuthServiceRabbitIT {
     @Test
     void shouldNotPublishEventWhenTransactionRollsBack() {
         // given
-        RegisterRequest req1 = new RegisterRequest("dup@test.com", "PassPass123!");
-        RegisterRequest req2 = new RegisterRequest("dup@test.com", "PassPass123!");
+        RegisterRequest req1 = new RegisterRequest("wot@test.com", "PassPass123!");
+        RegisterRequest req2 = new RegisterRequest("wot@test.com", "PassPass123!");
 
         authService.register(req1);
 
