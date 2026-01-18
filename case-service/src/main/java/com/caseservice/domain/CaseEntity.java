@@ -48,4 +48,11 @@ public class CaseEntity {
     @Column(name = "created_by_user_id", nullable = false)
     private UUID createdByUserId;
 
+    @Column(name = "assigned_officer_id")
+    private UUID assignedOfficerId;
+
+    @Column(name = "assigned_at")
+    private Instant assignedAt;
+
+
 }

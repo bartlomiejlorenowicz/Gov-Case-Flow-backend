@@ -4,6 +4,7 @@ import com.caseservice.domain.CaseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import com.caseservice.domain.CaseStatus;
 
 import org.springframework.data.domain.Pageable;
 import java.util.Optional;
@@ -17,5 +18,9 @@ public interface CaseRepository extends JpaRepository<CaseEntity, UUID> {
     boolean existsByCaseNumber(String caseNumber);
 
     Page<CaseEntity> findAllByCreatedByUserId(UUID userId, Pageable pageable);
+
+    Page<CaseEntity> findAllByAssignedOfficerId(UUID officerId, Pageable pageable);
+
+    Page<CaseEntity> findAllByStatus(CaseStatus status, Pageable pageable);
 
 }

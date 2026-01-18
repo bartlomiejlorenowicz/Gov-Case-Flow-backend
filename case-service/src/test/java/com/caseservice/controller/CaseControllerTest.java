@@ -6,6 +6,7 @@ import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.exceptions.CaseNotFoundException;
+import com.caseservice.security.CurrentUserProvider;
 import com.caseservice.security.JwtService;
 import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
@@ -47,6 +48,9 @@ class CaseControllerTest {
 
     @MockBean
     private JwtService jwtService;
+
+    @MockBean
+    private CurrentUserProvider currentUserProvider;
 
     @Autowired
     private MockMvc mockMvc;
@@ -203,22 +207,28 @@ class CaseControllerTest {
     }
 
     @Test
-    void shouldChangeCaseStatusSuccessfully() throws Exception {
-        // given
+    void shouldChangeCaseStatusSuccessfully_asAdmin() throws Exception {
         UUID caseId = UUID.randomUUID();
-        var auth = authUser();
+        UUID adminId = UUID.randomUUID();
 
-        ChangeCaseStatusRequest request = new ChangeCaseStatusRequest(CaseStatus.SUBMITTED);
+        var auth = new UsernamePasswordAuthenticationToken(
+                new UserPrincipal(adminId, "admin@caseflow.local"),
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
 
-        // when + then
+        String json = """
+            { "newStatus": "IN_REVIEW" }
+            """;
+
         mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
                         .with(authentication(auth))
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(json))
                 .andExpect(status().isNoContent());
 
-        verify(caseService).changeStatus(caseId, CaseStatus.SUBMITTED);
+        verify(caseService).changeStatus(caseId, CaseStatus.IN_REVIEW, adminId, true);
     }
 
     @Test

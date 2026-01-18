@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="2026-01-18-01-add-case-assignment-columns" author="Bartek">
+        <addColumn tableName="cases">
+            <column name="assigned_officer_id" type="UUID"/>
+            <column name="assigned_at" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-01-18-02-add-index-assigned-officer" author="Bartek">
+        <createIndex tableName="cases" indexName="idx_cases_assigned_officer_id">
+            <column name="assigned_officer_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,5 +1,6 @@
 package com.caseservice.service;
 
+import com.caseservice.exceptions.*;
 import com.caseservice.mapper.CaseStatusEventMapper;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.caseservice.domain.CaseEntity;
@@ -9,9 +10,6 @@ import com.caseservice.domain.CaseStatusTransitions;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
-import com.caseservice.exceptions.CaseAlreadyExistsException;
-import com.caseservice.exceptions.CaseNotFoundException;
-import com.caseservice.exceptions.InvalidCaseStatusTransitionException;
 import com.caseservice.mapper.CaseMapper;
 import com.caseservice.repository.CaseRepository;
 import com.caseservice.repository.CaseStatusHistoryRepository;
@@ -81,17 +79,111 @@ public class CaseService {
         return mapper.toDto(caseEntity);
     }
 
+//    @Transactional
+//    public void changeStatus(UUID caseId, CaseStatus newStatus) {
+//        log.info("Changing case {} status to {}", caseId, newStatus);
+//
+//        CaseEntity caseEntity = caseRepository.findById(caseId)
+//                .orElseThrow(() -> new CaseNotFoundException("Case with id " + caseId + " not found"));
+//
+//        CaseStatus oldStatus = caseEntity.getStatus();
+//
+//        if (!CaseStatusTransitions.isAllowedTransition(oldStatus, newStatus)) {
+//            throw new InvalidCaseStatusTransitionException("Invalid status transition from " + oldStatus + " to " + newStatus);
+//        }
+//
+//        CaseStatusHistory history = CaseStatusHistory.builder()
+//                .caseId(caseId)
+//                .oldStatus(oldStatus)
+//                .newStatus(newStatus)
+//                .changedAt(Instant.now(clock))
+//                .changedBy("system")
+//                .build();
+//
+//        historyRepository.save(history);
+//
+//        caseEntity.setStatus(newStatus);
+//
+//        var event = new CaseStatusChangedEvent(
+//                caseId,
+//                CaseStatusEventMapper.toEvent(oldStatus),
+//                CaseStatusEventMapper.toEvent(newStatus),
+//                Instant.now(clock),
+//                "SYSTEM"
+//        );
+//
+//        eventPublisher.publishEvent(event);
+//    }
+
     @Transactional
-    public void changeStatus(UUID caseId, CaseStatus newStatus) {
-        log.info("Changing case {} status to {}", caseId, newStatus);
+    public void deleteCase(UUID caseId) {
+        log.info("Deleting case with id {}", caseId);
+        CaseEntity entity = caseRepository.findById(caseId)
+                .orElseThrow(() ->
+                        new CaseNotFoundException("Case with id " + caseId + " not found")
+                );
+        caseRepository.delete(entity);
+    }
+
+    @Transactional
+    public CaseEntityDto assignToMe(UUID caseId, UUID officerId) {
 
         CaseEntity caseEntity = caseRepository.findById(caseId)
                 .orElseThrow(() -> new CaseNotFoundException("Case with id " + caseId + " not found"));
 
+        if (caseEntity.getStatus() != CaseStatus.SUBMITTED) {
+            throw new CaseAssignmentNotAllowedException("Only SUBMITTED cases can be assigned");
+        }
+
+        if (caseEntity.getAssignedOfficerId() != null) {
+            throw new CaseAlreadyAssignedException(
+                    "Case is already assigned to officerId=" + caseEntity.getAssignedOfficerId()
+            );
+        }
+
+        caseEntity.setAssignedOfficerId(officerId);
+        caseEntity.setAssignedAt(Instant.now(clock));
+
+        log.info("Case {} assigned to officer {}", caseId, officerId);
+
+        return mapper.toDto(caseEntity);
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public Page<CaseEntityDto> getAssignedToMe(UUID officerId, Pageable pageable) {
+        return caseRepository.findAllByAssignedOfficerId(officerId, pageable)
+                .map(mapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CaseEntityDto> getSubmittedQueue(Pageable pageable) {
+        return caseRepository.findAllByStatus(CaseStatus.SUBMITTED, pageable)
+                .map(mapper::toDto);
+    }
+
+    @Transactional
+    public void changeStatus(UUID caseId, CaseStatus newStatus, UUID actorUserId, boolean isAdmin) {
+
+        log.info("Changing case {} status to {} by user {}", caseId, newStatus, actorUserId);
+
+        CaseEntity caseEntity = caseRepository.findById(caseId)
+                .orElseThrow(() -> new CaseNotFoundException("Case with id " + caseId + " not found"));
+
+        if (!isAdmin) {
+            UUID assignedOfficerId = caseEntity.getAssignedOfficerId();
+            if (assignedOfficerId == null || !assignedOfficerId.equals(actorUserId)) {
+                throw new CaseAccessDeniedException("Officer can change status only for assigned cases");
+            }
+        }
+
         CaseStatus oldStatus = caseEntity.getStatus();
 
         if (!CaseStatusTransitions.isAllowedTransition(oldStatus, newStatus)) {
-            throw new InvalidCaseStatusTransitionException("Invalid status transition from " + oldStatus + " to " + newStatus);
+            throw new InvalidCaseStatusTransitionException(
+                    "Invalid status transition from " + oldStatus + " to " + newStatus
+            );
         }
 
         CaseStatusHistory history = CaseStatusHistory.builder()
@@ -99,7 +191,7 @@ public class CaseService {
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
                 .changedAt(Instant.now(clock))
-                .changedBy("system")
+                .changedBy(actorUserId.toString())
                 .build();
 
         historyRepository.save(history);
@@ -111,19 +203,10 @@ public class CaseService {
                 CaseStatusEventMapper.toEvent(oldStatus),
                 CaseStatusEventMapper.toEvent(newStatus),
                 Instant.now(clock),
-                "SYSTEM"
+                actorUserId.toString()
         );
 
         eventPublisher.publishEvent(event);
     }
 
-    @Transactional
-    public void deleteCase(UUID caseId) {
-        log.info("Deleting case with id {}", caseId);
-        CaseEntity entity = caseRepository.findById(caseId)
-                .orElseThrow(() ->
-                        new CaseNotFoundException("Case with id " + caseId + " not found")
-                );
-        caseRepository.delete(entity);
-    }
 }
