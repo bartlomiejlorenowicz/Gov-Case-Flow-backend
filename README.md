@@ -93,11 +93,11 @@ flowchart LR
 - listens for domain events
 - currently logs received events (planned: email/in-app notifications)
 
-## ⚡ Run the project in 2–3 minutes (Docker)
+## 🐳 Run locally (Docker Compose)
+✅ Recommended: run everything using Docker Compose.
+- The easiest way to run the project locally is using **Docker Compose** (no manual database setup required).
 
-The easiest way to run the project locally is using **Docker Compose** (no manual database setup required).
-
-### 1️⃣ Clone the repository 
+### 1️⃣ Clone the repository
 
 ```bash
 
@@ -105,38 +105,33 @@ git clone https://github.com/bartlomiejlorenowicz/Gov-Case-Flow-backend.git
 cd Gov-Case-Flow-backend
 ```
 
-### 2️⃣ Start the application
-``` bash
-
-docker compose up --build
-
-This will start:
-
-PostgreSQL databases (auth_db, case_db, audit_db)
-
-RabbitMQ (with management UI)
-
-Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
-
-```
-
-3️⃣ Access the application
+### 2️⃣ Configuration (.env)
 ```bash
 
-Case Service Swagger UI: http://localhost:8080/swagger-ui/index.html
-
-Auth Service Swagger UI: http://localhost:8081/swagger-ui/index.html
-
-RabbitMQ Management UI: http://localhost:15672
-
+cp .env.example .env
 ```
 
-## 🐳 Run locally (Docker Compose)
-✅ Recommended: run everything using Docker Compose.
+### 3️⃣ Start the application
 
-### Start
-- bash Copy code
-- docker compose up --build
+```bash
+
+docker compose up --build
+```
+This will start:
+
+- PostgreSQL databases (auth_db, case_db, audit_db)
+
+- RabbitMQ (with management UI)
+
+- Spring Boot microservices (auth-service, case-service, audit-service, notification-service)
+
+### 4️⃣ Access the application
+
+- Case Service Swagger UI: http://localhost:8080/swagger-ui/index.html
+- Auth Service Swagger UI: http://localhost:8081/swagger-ui/index.html
+- Audit Service Swagger UI: http://localhost:8082/swagger-ui/index.html
+- RabbitMQ Management UI: http://localhost:15672 (guest/guest)
+
 ### Services & ports:
 | Service | Port (host → container) | Notes |
 |--------|-------------------------|------|
@@ -163,19 +158,9 @@ Swagger UI is available per service:
 - **Auth Service:** http://localhost:8081/swagger-ui/index.html
 - **Audit Service:** http://localhost:8082/swagger-ui/index.html
 
-## 🔑 Configuration
-Currently configuration is provided directly in docker-compose.yml.
-Planned improvement: .env support.
-
-RabbitMQ
-Host: rabbitmq
-
-Port: 5672
-
-Management UI: http://localhost:15672
-
 ## 🎬 Demo (Swagger UI)
 
+> Admin role is assigned locally for demo purposes (not stored in repository).
 > All admin endpoints are secured with **JWT + ROLE_ADMIN**.  
 > Every status change publishes an event and is persisted in the **audit trail**.
 
@@ -232,9 +217,9 @@ Workflow file:
 
 ## 🗺️ Roadmap
 
-- [ ] add `.env` + `.env.example`
+- [x] add `.env` + `.env.example`
 - [x] add OpenAPI/Swagger documentation
-- [ ] add Testcontainers integration tests (Postgres + RabbitMQ)
+- [x] add Testcontainers integration tests (Postgres + RabbitMQ)
 - [ ] improve observability (Actuator metrics)
 - [ ] correlation IDs / tracing in logs
 - [ ] implement real notification delivery (email / in-app)
