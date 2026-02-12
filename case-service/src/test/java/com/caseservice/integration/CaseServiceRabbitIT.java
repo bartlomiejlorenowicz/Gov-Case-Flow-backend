@@ -7,6 +7,7 @@ import com.caseservice.repository.CaseRepository;
 import com.caseservice.repository.CaseStatusHistoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
+import io.jsonwebtoken.Jwts;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -110,12 +112,12 @@ class CaseServiceRabbitIT {
         // given
         UUID userId = UUID.randomUUID();
 
-        String token = io.jsonwebtoken.Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject("test@test.com")
                 .claim("userId", userId.toString())
                 .claim("roles", java.util.List.of("ADMIN"))
                 .setIssuedAt(new java.util.Date())
-                .setExpiration(java.util.Date.from(java.time.Instant.now().plusSeconds(3600)))
+                .setExpiration(Date.from(java.time.Instant.now().plusSeconds(3600)))
                 .signWith(
                         io.jsonwebtoken.security.Keys.hmacShaKeyFor(
                                 "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF".getBytes()

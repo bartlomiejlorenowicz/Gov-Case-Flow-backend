@@ -24,6 +24,7 @@
         <module>audit-service</module>
         <module>notification-service</module>
         <module>auth-service</module>
+        <module>gov-case-flow-tracing</module>
     </modules>
 
     <properties>
@@ -37,6 +38,19 @@
                 <artifactId>gov-case-flow-events</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com</groupId>
+                <artifactId>gov-case-flow-events</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com</groupId>
+                <artifactId>gov-case-flow-tracing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

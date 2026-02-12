@@ -79,42 +79,6 @@ public class CaseService {
         return mapper.toDto(caseEntity);
     }
 
-//    @Transactional
-//    public void changeStatus(UUID caseId, CaseStatus newStatus) {
-//        log.info("Changing case {} status to {}", caseId, newStatus);
-//
-//        CaseEntity caseEntity = caseRepository.findById(caseId)
-//                .orElseThrow(() -> new CaseNotFoundException("Case with id " + caseId + " not found"));
-//
-//        CaseStatus oldStatus = caseEntity.getStatus();
-//
-//        if (!CaseStatusTransitions.isAllowedTransition(oldStatus, newStatus)) {
-//            throw new InvalidCaseStatusTransitionException("Invalid status transition from " + oldStatus + " to " + newStatus);
-//        }
-//
-//        CaseStatusHistory history = CaseStatusHistory.builder()
-//                .caseId(caseId)
-//                .oldStatus(oldStatus)
-//                .newStatus(newStatus)
-//                .changedAt(Instant.now(clock))
-//                .changedBy("system")
-//                .build();
-//
-//        historyRepository.save(history);
-//
-//        caseEntity.setStatus(newStatus);
-//
-//        var event = new CaseStatusChangedEvent(
-//                caseId,
-//                CaseStatusEventMapper.toEvent(oldStatus),
-//                CaseStatusEventMapper.toEvent(newStatus),
-//                Instant.now(clock),
-//                "SYSTEM"
-//        );
-//
-//        eventPublisher.publishEvent(event);
-//    }
-
     @Transactional
     public void deleteCase(UUID caseId) {
         log.info("Deleting case with id {}", caseId);

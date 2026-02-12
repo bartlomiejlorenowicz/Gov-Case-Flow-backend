@@ -105,6 +105,11 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com</groupId>
+            <artifactId>gov-case-flow-tracing</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
