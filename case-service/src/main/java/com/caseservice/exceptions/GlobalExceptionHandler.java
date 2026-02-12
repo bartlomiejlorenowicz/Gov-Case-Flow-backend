@@ -27,23 +27,6 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(HttpServletRequest request, Exception ex) {
-        String traceId = MDC.get("traceId");
-        log.error("Unhandled exception, path={}, traceId={}",
-                request.getRequestURI(),
-                traceId,
-                ex);
-
-        return buildResponse(
-                request,
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                ErrorCode.INTERNAL_ERROR,
-                ex.getMessage(),
-                null
-        );
-    }
-
     @ExceptionHandler(InvalidCaseStatusTransitionException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCaseStatusTransitionException(HttpServletRequest request,
                                                                                     InvalidCaseStatusTransitionException ex) {
