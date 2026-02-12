@@ -3,8 +3,10 @@ package com.notificationservice.listener;
 import com.notificationservice.config.NotificationAmqpConfig;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.context.annotation.Profile;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Slf4j

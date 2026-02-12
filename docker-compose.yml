@@ -101,8 +101,8 @@ services:
   auth-postgres:
     image: postgres:17
     container_name: auth-postgres
-    ports:
-      - "${AUTH_DB_PORT}:5432"
+#    ports:
+#      - "${AUTH_DB_PORT}:5432"
     env_file:
       - .env
     environment:

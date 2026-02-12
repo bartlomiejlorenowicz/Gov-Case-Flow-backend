@@ -139,6 +139,11 @@
             <version>2.6.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com</groupId>
+            <artifactId>gov-case-flow-tracing</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
