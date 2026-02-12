@@ -1,0 +1,14 @@
+package com.govcaseflow.infrastructure.web;
+
+
+public enum ErrorCode {
+    VALIDATION_ERROR,
+    BUSINESS_RULE_VIOLATION,
+    RESOURCE_NOT_FOUND,
+    ACCESS_DENIED,
+    INTERNAL_ERROR,
+    UNAUTHORIZED,
+    USER_ALREADY_EXISTS,
+    INVALID_CREDENTIALS,
+    INVALID_TOKEN
+}

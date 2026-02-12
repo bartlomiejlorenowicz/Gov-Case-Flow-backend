@@ -6,6 +6,7 @@ import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.exceptions.CaseNotFoundException;
+import com.caseservice.security.CurrentUser;
 import com.caseservice.security.CurrentUserProvider;
 import com.caseservice.security.JwtService;
 import com.caseservice.security.UserPrincipal;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
@@ -32,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +43,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CaseController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class CaseControllerTest {
 
@@ -55,7 +59,8 @@ class CaseControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     List<CaseEntityDto> cases;
 
@@ -100,6 +105,12 @@ class CaseControllerTest {
 
         var page = new PageImpl<>(cases, PageRequest.of(0, 20), cases.size());
         when(caseService.getAllForUser(eq(userId), any(Pageable.class))).thenReturn(page);
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(new CurrentUser(
+                        userId,
+                        "test@test.com",
+                        Set.of("USER")
+                ));
 
         // then
         mockMvc.perform(get("/api/cases")
@@ -120,9 +131,15 @@ class CaseControllerTest {
 
     @Test
     void shouldReturnEmptyBodyWhenNoCasesExist() throws Exception {
-        // given
+
         UUID userId = UUID.randomUUID();
-        var auth = authUser(userId);
+
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(new CurrentUser(
+                        userId,
+                        "user@test.com",
+                        Set.of("USER")
+                ));
 
         var emptyPage = new PageImpl<CaseEntityDto>(
                 List.of(),
@@ -134,8 +151,7 @@ class CaseControllerTest {
                 .thenReturn(emptyPage);
 
         mockMvc.perform(get("/api/cases")
-                        .header("Accept", "application/json")
-                        .with(authentication(auth)))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content").isEmpty())
@@ -159,9 +175,8 @@ class CaseControllerTest {
 
     @Test
     void shouldCreateCaseSuccessfully() throws Exception {
-        // given
+
         UUID userId = UUID.randomUUID();
-        var auth = authUser(userId);
 
         CreateCaseRequest request =
                 new CreateCaseRequest("CASE-2026-003", "90010112377");
@@ -175,10 +190,17 @@ class CaseControllerTest {
                         Instant.now()
                 );
 
-        when(caseService.createCase(eq(request), eq(userId))).thenReturn(response);
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(new CurrentUser(
+                        userId,
+                        "test@test.com",
+                        Set.of("USER")
+                ));
+
+        when(caseService.createCase(eq(request), eq(userId)))
+                .thenReturn(response);
 
         mockMvc.perform(post("/api/cases")
-                        .with(authentication(auth))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -208,49 +230,52 @@ class CaseControllerTest {
 
     @Test
     void shouldChangeCaseStatusSuccessfully_asAdmin() throws Exception {
+
         UUID caseId = UUID.randomUUID();
         UUID adminId = UUID.randomUUID();
 
-        var auth = new UsernamePasswordAuthenticationToken(
-                new UserPrincipal(adminId, "admin@caseflow.local"),
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
-        );
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(new CurrentUser(
+                        adminId,
+                        "admin@caseflow.local",
+                        Set.of("ADMIN")
+                ));
 
         String json = """
-            { "newStatus": "IN_REVIEW" }
+        { "newStatus": "IN_REVIEW" }
+        """;
+
+        mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                        .content(json))
+                .andExpect(status().isNoContent());
+
+        verify(caseService)
+                .changeStatus(caseId, CaseStatus.IN_REVIEW, adminId, true);
+    }
+
+    @Test
+    void shouldReturn400WhenStatusIsNull() throws Exception {
+
+        UUID caseId = UUID.randomUUID();
+
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(new CurrentUser(
+                        UUID.randomUUID(),
+                        "user@test.com",
+                        Set.of("USER")
+                ));
+
+        String json = """
+            {
+                "newStatus": null
+            }
             """;
 
         mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
-                        .with(authentication(auth))
-                        .content(json))
-                .andExpect(status().isNoContent());
-
-        verify(caseService).changeStatus(caseId, CaseStatus.IN_REVIEW, adminId, true);
-    }
-
-    @Test
-    void shouldReturn400WhenStatusIsNull() throws Exception {
-        UUID caseId = UUID.randomUUID();
-        UserPrincipal principal = new UserPrincipal(caseId, "test@test.com");
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                principal,
-                null,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
-        );
-
-        String json = """
-                {
-                    "newStatus": null
-                }
-                """;
-
-        mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .with(csrf())
-                        .with(authentication(auth))
                         .content(json))
                 .andExpect(status().isBadRequest());
 
@@ -259,17 +284,23 @@ class CaseControllerTest {
 
     @Test
     void shouldReturnMyCasesPaged() throws Exception {
-        // given
+
         UUID userId = UUID.randomUUID();
-        var auth = authUser(userId);
+
+        when(currentUserProvider.getCurrentUser())
+                .thenReturn(new CurrentUser(
+                        userId,
+                        "user@test.com",
+                        Set.of("USER")
+                ));
 
         var page = new PageImpl<>(cases, PageRequest.of(0, 20), cases.size());
-        when(caseService.getAllForUser(eq(userId), any(Pageable.class))).thenReturn(page);
 
-        // then
+        when(caseService.getAllForUser(eq(userId), any(Pageable.class)))
+                .thenReturn(page);
+
         mockMvc.perform(get("/api/cases?page=0&size=20")
-                        .accept(MediaType.APPLICATION_JSON)
-                        .with(authentication(auth)))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content.length()").value(2))

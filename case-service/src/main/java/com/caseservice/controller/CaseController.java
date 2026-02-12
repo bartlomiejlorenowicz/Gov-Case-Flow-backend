@@ -1,13 +1,11 @@
 package com.caseservice.controller;
 
-import com.caseservice.domain.CaseStatus;
 import com.caseservice.dto.request.ChangeCaseStatusRequest;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
 import com.caseservice.security.CurrentUser;
 import com.caseservice.security.CurrentUserProvider;
-import com.caseservice.security.UserPrincipal;
 import com.caseservice.service.CaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +16,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -36,25 +30,20 @@ public class CaseController {
 
     @PostMapping
     public ResponseEntity<CaseResponse> createCase(
-            @Valid @RequestBody CreateCaseRequest createCaseRequest,
-            @CurrentSecurityContext(expression = "authentication.principal") UserPrincipal principal
+            @Valid @RequestBody CreateCaseRequest createCaseRequest
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(caseService.createCase(createCaseRequest, principal.userId()));
-    }
+        CurrentUser user = currentUserProvider.getCurrentUser();
 
-//    @PatchMapping("/{caseId}/status")
-//    public ResponseEntity<Void> changeCaseStatus(@PathVariable UUID caseId, @Valid @RequestBody ChangeCaseStatusRequest  changeCaseStatusRequest) {
-//        caseService.changeStatus(caseId, changeCaseStatusRequest.newStatus());
-//        return ResponseEntity.noContent().build();
-//    }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(caseService.createCase(createCaseRequest, user.userId()));
+    }
 
     @GetMapping
     public ResponseEntity<Page<CaseEntityDto>> getMyCases(
-            @AuthenticationPrincipal UserPrincipal principal,
             @ParameterObject @PageableDefault(size = 10, sort = "createdAt") Pageable pageable
     ) {
-        return ResponseEntity.ok(caseService.getAllForUser(principal.userId(), pageable));
+        CurrentUser user = currentUserProvider.getCurrentUser();
+        return ResponseEntity.ok(caseService.getAllForUser(user.userId(), pageable));
     }
 
     @GetMapping("/all")
@@ -98,18 +87,15 @@ public class CaseController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeStatus(
             @PathVariable UUID caseId,
-            @RequestBody @Valid ChangeCaseStatusRequest request,
-            Authentication authentication
+            @RequestBody @Valid ChangeCaseStatusRequest request
     ) {
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        CurrentUser user = currentUserProvider.getCurrentUser();
 
-        UUID actorUserId = principal.userId();
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-        caseService.changeStatus(caseId, request.newStatus(), actorUserId, isAdmin);
+        caseService.changeStatus(
+                caseId,
+                request.newStatus(),
+                user.userId(),
+                user.isAdmin()
+        );
     }
-
-
 }
