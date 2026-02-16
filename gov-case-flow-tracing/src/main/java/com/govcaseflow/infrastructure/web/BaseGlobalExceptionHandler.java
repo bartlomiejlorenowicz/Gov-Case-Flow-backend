@@ -10,13 +10,20 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.Instant;
 import java.util.List;
 
+import static com.govcaseflow.infrastructure.tracing.TraceConstants.TRACE_ID_MDC_KEY;
+
 public abstract class BaseGlobalExceptionHandler
         extends ResponseEntityExceptionHandler {
+
+//    private final String TRACE_ID_MDC_KEY = "traceId";
+    private final String VALIDATION_FAILED = "Validation failed";
+    private final String UNEXPECTED_ERROR = "Unexpected error occurred";
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
@@ -43,12 +50,27 @@ public abstract class BaseGlobalExceptionHandler
                 servletRequest,
                 HttpStatus.BAD_REQUEST,
                 ErrorCode.VALIDATION_ERROR,
-                "Validation failed",
+                VALIDATION_FAILED,
                 fieldValidationErrors
         );
 
         return ResponseEntity.badRequest().body(errorBody);
     }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            HttpServletRequest request,
+            MethodArgumentTypeMismatchException ex
+    ) {
+        return buildResponse(
+                request,
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.VALIDATION_ERROR,
+                "Invalid value for parameter: " + ex.getName(),
+                null
+        );
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
@@ -59,7 +81,7 @@ public abstract class BaseGlobalExceptionHandler
                 request,
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 ErrorCode.INTERNAL_ERROR,
-                "Unexpected error occurred",
+                UNEXPECTED_ERROR,
                 null
         );
     }
@@ -77,7 +99,7 @@ public abstract class BaseGlobalExceptionHandler
                 errorCode,
                 message,
                 request.getRequestURI(),
-                MDC.get("traceId"),
+                MDC.get(TRACE_ID_MDC_KEY),
                 fieldErrors
         );
 
@@ -97,7 +119,7 @@ public abstract class BaseGlobalExceptionHandler
                 errorCode,
                 message,
                 request.getRequestURI(),
-                MDC.get("traceId"),
+                MDC.get(TRACE_ID_MDC_KEY),
                 fieldErrors
         );
     }
