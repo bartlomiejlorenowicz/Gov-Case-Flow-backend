@@ -1,6 +1,5 @@
 package com.caseservice.controller;
 
-import com.caseservice.dto.request.ChangeCaseStatusRequest;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
@@ -23,7 +22,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/cases")
 @RequiredArgsConstructor
-public class CaseController {
+@PreAuthorize("hasRole('USER')")
+public class CaseUserController {
 
     private final CaseService caseService;
     private final CurrentUserProvider currentUserProvider;
@@ -46,56 +46,8 @@ public class CaseController {
         return ResponseEntity.ok(caseService.getAllForUser(user.userId(), pageable));
     }
 
-    @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('ADMIN','OFFICER')")
-    public ResponseEntity<Page<CaseEntityDto>> getAllCases(@ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(caseService.getAll(pageable));
-    }
-
     @GetMapping("/{caseId}")
     public ResponseEntity<CaseEntityDto> getCaseById(@PathVariable UUID caseId) {
         return ResponseEntity.ok().body(caseService.getById(caseId));
-    }
-
-    @DeleteMapping("/{caseId}")
-    public ResponseEntity<Void> delete(@PathVariable UUID caseId) {
-        caseService.deleteCase(caseId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/queue/submitted")
-    @PreAuthorize("hasAnyRole('OFFICER','ADMIN')")
-    public Page<CaseEntityDto> submittedQueue(Pageable pageable) {
-        return caseService.getSubmittedQueue(pageable);
-    }
-
-    @PostMapping("/{id}/assign-to-me")
-    @PreAuthorize("hasAnyRole('OFFICER','ADMIN')")
-    public CaseEntityDto assignToMe(@PathVariable UUID id) {
-        CurrentUser user = currentUserProvider.getCurrentUser();
-        return caseService.assignToMe(id, user.userId());
-    }
-
-    @GetMapping("/assigned-to-me")
-    @PreAuthorize("hasAnyRole('OFFICER','ADMIN')")
-    public Page<CaseEntityDto> assignedToMe(Pageable pageable) {
-        CurrentUser user = currentUserProvider.getCurrentUser();
-        return caseService.getAssignedToMe(user.userId(), pageable);
-    }
-
-    @PatchMapping("/{caseId}/status")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changeStatus(
-            @PathVariable UUID caseId,
-            @RequestBody @Valid ChangeCaseStatusRequest request
-    ) {
-        CurrentUser user = currentUserProvider.getCurrentUser();
-
-        caseService.changeStatus(
-                caseId,
-                request.newStatus(),
-                user.userId(),
-                user.isAdmin()
-        );
     }
 }
