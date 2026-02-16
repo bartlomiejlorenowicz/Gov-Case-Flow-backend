@@ -58,7 +58,7 @@ class AuditControllerTest {
                 CaseStatus.IN_REVIEW.name(),
                 Instant.now(),
                 "SYSTEM",
-
+                UUID.randomUUID().toString(),
                 "CASE_STATUS_CHANGED",
                 "LOW",
                 "case-service",
@@ -91,7 +91,7 @@ class AuditControllerTest {
                 CaseStatus.IN_REVIEW.name(),
                 Instant.now(),
                 "SYSTEM",
-
+                UUID.randomUUID().toString(),
                 "CASE_STATUS_CHANGED",
                 "LOW",
                 "case-service",
@@ -180,6 +180,7 @@ class AuditControllerTest {
                 "IN_REVIEW",
                 Instant.now(),
                 "SYSTEM",
+                UUID.randomUUID().toString(),
                 "CASE_STATUS_CHANGED",
                 "LOW",
                 "case-service",

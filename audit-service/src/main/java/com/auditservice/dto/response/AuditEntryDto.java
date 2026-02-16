@@ -10,7 +10,7 @@ public record AuditEntryDto(
         String newStatus,
         Instant changedAt,
         String changedBy,
-
+        String traceId,
         String eventType,
         String severity,
         String sourceService,
