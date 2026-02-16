@@ -11,4 +11,5 @@ public interface AuditRepository extends JpaRepository<AuditEntry, UUID> {
 
     Page<AuditEntry> findAllByCaseId(UUID caseId, Pageable pageable);
 
+    Page<AuditEntry> findAllByTraceId(String traceId, Pageable pageable);
 }

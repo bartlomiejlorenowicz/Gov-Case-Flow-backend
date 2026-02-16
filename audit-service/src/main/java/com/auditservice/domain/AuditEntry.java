@@ -35,4 +35,10 @@ public class AuditEntry {
 
     @Column(nullable = false)
     private String changedBy;
+
+    @Column(nullable = false)
+    private String traceId;
+
+    @Enumerated(EnumType.STRING)
+    private AuditAction action;
 }

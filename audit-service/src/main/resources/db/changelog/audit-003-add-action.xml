@@ -6,8 +6,17 @@
            http://www.liquibase.org/xml/ns/dbchangelog
            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-    <include file="db/changelog/001-create-audit-log.xml"/>
-    <include file="db/changelog/audit-002-add-trace-id.xml"/>
-    <include file="db/changelog/audit-003-add-action.xml"/>
+    <changeSet id="audit-003-add-action" author="bartek">
+
+        <addColumn tableName="audit_log">
+            <column name="action" type="varchar(50)"/>
+        </addColumn>
+
+        <createIndex indexName="idx_audit_action"
+                     tableName="audit_log">
+            <column name="action"/>
+        </createIndex>
+
+    </changeSet>
 
 </databaseChangeLog>

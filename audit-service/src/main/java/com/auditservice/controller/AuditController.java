@@ -4,6 +4,7 @@ import com.auditservice.domain.AuditEntry;
 import com.auditservice.dto.response.AuditEntryDto;
 import com.auditservice.repository.AuditRepository;
 import com.auditservice.service.AuditService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -42,5 +43,10 @@ public class AuditController {
             Pageable pageable
     ) {
         return ResponseEntity.ok(service.getByCaseId(caseId, pageable));
+    }
+
+    @GetMapping("/trace/{traceId}")
+    public ResponseEntity<Page<AuditEntryDto>> getByTraceId(@PathVariable String traceId, Pageable pageable) {
+        return ResponseEntity.ok(service.getByTraceId(traceId, pageable));
     }
 }
