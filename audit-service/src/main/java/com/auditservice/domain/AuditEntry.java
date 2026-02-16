@@ -41,4 +41,26 @@ public class AuditEntry {
 
     @Enumerated(EnumType.STRING)
     private AuditAction action;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuditSeverity severity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuditEventType eventType;
+
+    @Column(nullable = false)
+    private String sourceService;
+
+    @Column(nullable = false)
+    private String actorUserId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuditTargetType targetType;
+
+    @Column(nullable = false)
+    private String targetId;
+
 }

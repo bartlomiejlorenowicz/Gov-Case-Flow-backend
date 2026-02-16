@@ -9,5 +9,12 @@ public record AuditEntryDto(
         String oldStatus,
         String newStatus,
         Instant changedAt,
-        String changedByUserId
-) { }
+        String changedBy,
+
+        String eventType,
+        String severity,
+        String sourceService,
+        String actorUserId,
+        String targetType,
+        String targetId
+) {}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="audit-004-soc-fields" author="bartek">
+
+        <addColumn tableName="audit_log">
+            <column name="severity" type="varchar(20)"/>
+            <column name="event_type" type="varchar(50)"/>
+            <column name="source_service" type="varchar(100)"/>
+            <column name="actor_user_id" type="varchar(50)"/>
+            <column name="target_type" type="varchar(50)"/>
+            <column name="target_id" type="varchar(50)"/>
+        </addColumn>
+
+        <createIndex tableName="audit_log" indexName="idx_audit_actor">
+            <column name="actor_user_id"/>
+        </createIndex>
+
+        <createIndex tableName="audit_log" indexName="idx_audit_event_type">
+            <column name="event_type"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

@@ -11,10 +11,23 @@ public class AuditEntryMapper {
         return new AuditEntryDto(
                 e.getId(),
                 e.getCaseId(),
-                e.getOldStatus() != null ? e.getOldStatus().name() : null,
-                e.getNewStatus() != null ? e.getNewStatus().name() : null,
+
+                enumName(e.getOldStatus()),
+                enumName(e.getNewStatus()),
+
                 e.getChangedAt(),
-                e.getChangedBy()
+                e.getChangedBy(),
+
+                enumName(e.getEventType()),
+                enumName(e.getSeverity()),
+                e.getSourceService(),
+                e.getActorUserId(),
+                enumName(e.getTargetType()),
+                e.getTargetId()
         );
+    }
+
+    private String enumName(Enum<?> e) {
+        return e != null ? e.name() : null;
     }
 }
