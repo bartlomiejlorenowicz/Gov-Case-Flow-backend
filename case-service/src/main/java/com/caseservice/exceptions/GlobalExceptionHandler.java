@@ -100,37 +100,37 @@ public class GlobalExceptionHandler extends BaseGlobalExceptionHandler {
         );
     }
 
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request
-    ) {
-
-        HttpServletRequest servletRequest =
-                ((ServletWebRequest) request).getRequest();
-
-        List<FieldValidationError> fieldValidationErrors =
-                ex.getBindingResult()
-                        .getFieldErrors()
-                        .stream()
-                        .map(error -> new FieldValidationError(
-                                error.getField(),
-                                error.getDefaultMessage()
-                        ))
-                        .toList();
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                Instant.now(),
-                status.value(),
-                ErrorCode.VALIDATION_ERROR,
-                "Validation failed",
-                servletRequest.getRequestURI(),
-                MDC.get("traceId"),
-                fieldValidationErrors
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
+//    @Override
+//    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+//            MethodArgumentNotValidException ex,
+//            HttpHeaders headers,
+//            HttpStatusCode status,
+//            WebRequest request
+//    ) {
+//
+//        HttpServletRequest servletRequest =
+//                ((ServletWebRequest) request).getRequest();
+//
+//        List<FieldValidationError> fieldValidationErrors =
+//                ex.getBindingResult()
+//                        .getFieldErrors()
+//                        .stream()
+//                        .map(error -> new FieldValidationError(
+//                                error.getField(),
+//                                error.getDefaultMessage()
+//                        ))
+//                        .toList();
+//
+//        ErrorResponse errorResponse = new ErrorResponse(
+//                Instant.now(),
+//                status.value(),
+//                ErrorCode.VALIDATION_ERROR,
+//                "Validation failed",
+//                servletRequest.getRequestURI(),
+//                MDC.get("traceId"),
+//                fieldValidationErrors
+//        );
+//
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+//    }
 }
