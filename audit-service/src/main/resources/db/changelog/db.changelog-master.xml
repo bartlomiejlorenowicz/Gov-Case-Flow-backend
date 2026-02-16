@@ -7,5 +7,7 @@
            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
     <include file="db/changelog/001-create-audit-log.xml"/>
+    <include file="db/changelog/audit-002-add-trace-id.xml"/>
+    <include file="db/changelog/audit-003-add-action.xml"/>
 
 </databaseChangeLog>

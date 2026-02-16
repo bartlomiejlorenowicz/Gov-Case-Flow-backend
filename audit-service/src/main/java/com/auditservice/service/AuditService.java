@@ -1,5 +1,6 @@
 package com.auditservice.service;
 
+import com.auditservice.domain.AuditAction;
 import com.auditservice.domain.AuditEntry;
 import com.auditservice.dto.response.AuditEntryDto;
 import com.auditservice.mapper.AuditEntryMapper;
@@ -7,6 +8,7 @@ import com.auditservice.repository.AuditRepository;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,9 @@ public class AuditService {
     public void save(CaseStatusChangedEvent event) {
         log.info("Saving audit entry for caseId={}, {} -> {}",
                 event.caseId(), event.oldStatus(), event.newStatus());
+
+        String traceId = MDC.get("traceId");
+
         repository.save(
                 AuditEntry.builder()
                         .caseId(event.caseId())
@@ -31,9 +36,16 @@ public class AuditService {
                         .newStatus(event.newStatus())
                         .changedAt(event.changedAt())
                         .changedBy(event.changedBy())
+                        .traceId(traceId)
+                        .action(AuditAction.CASE_STATUS_CHANGED)
                         .build()
         );
         log.info("Audit entry saved successfully for caseId={}", event.caseId());
+    }
+
+    public Page<AuditEntryDto> getByTraceId(String traceId, Pageable pageable) {
+        return repository.findAllByTraceId(traceId, pageable)
+                .map(mapper::toDto);
     }
 
     public Page<AuditEntryDto> getAll(Pageable pageable) {
