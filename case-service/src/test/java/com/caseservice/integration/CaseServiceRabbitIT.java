@@ -142,7 +142,7 @@ class CaseServiceRabbitIT {
 
         // when
         mockMvc.perform(
-                        patch("/api/cases/{caseId}/status", caseId)
+                        patch("/api/officer/cases/{caseId}/status", caseId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .with(csrf())
                                 .header("Authorization", "Bearer " + token)

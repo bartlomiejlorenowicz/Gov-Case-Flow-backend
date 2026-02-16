@@ -1,7 +1,6 @@
 package com.caseservice.controller;
 
 import com.caseservice.domain.CaseStatus;
-import com.caseservice.dto.request.ChangeCaseStatusRequest;
 import com.caseservice.dto.request.CreateCaseRequest;
 import com.caseservice.dto.response.CaseEntityDto;
 import com.caseservice.dto.response.CaseResponse;
@@ -37,12 +36,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CaseController.class)
+@WebMvcTest({
+        CaseOfficerController.class,
+        CaseUserController.class
+})
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class CaseControllerTest {
@@ -245,7 +246,7 @@ class CaseControllerTest {
         { "newStatus": "IN_REVIEW" }
         """;
 
-        mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
+        mockMvc.perform(patch("/api/officer/cases/{caseId}/status", caseId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
                         .content(json))
@@ -257,23 +258,20 @@ class CaseControllerTest {
 
     @Test
     void shouldReturn400WhenStatusIsNull() throws Exception {
-
         UUID caseId = UUID.randomUUID();
 
         when(currentUserProvider.getCurrentUser())
                 .thenReturn(new CurrentUser(
                         UUID.randomUUID(),
-                        "user@test.com",
-                        Set.of("USER")
+                        "admin@test.com",
+                        Set.of("ADMIN")
                 ));
 
         String json = """
-            {
-                "newStatus": null
-            }
-            """;
+        { "newStatus": null }
+        """;
 
-        mockMvc.perform(patch("/api/cases/{caseId}/status", caseId)
+        mockMvc.perform(patch("/api/officer/cases/{caseId}/status", caseId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf())
                         .content(json))
