@@ -17,7 +17,7 @@ public class AuditEntryMapper {
 
                 e.getChangedAt(),
                 e.getChangedBy(),
-
+                e.getTraceId(),
                 enumName(e.getEventType()),
                 enumName(e.getSeverity()),
                 e.getSourceService(),
