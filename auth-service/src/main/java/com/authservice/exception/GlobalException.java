@@ -44,4 +44,26 @@ public class GlobalException extends BaseGlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuth(HttpServletRequest request, AuthenticationException ex) {
+        return buildResponse(
+                request,
+                HttpStatus.UNAUTHORIZED,
+                ErrorCode.INVALID_TOKEN,
+                ex.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(HttpServletRequest request,AccessDeniedException ex) {
+        return buildResponse(
+                request,
+                HttpStatus.FORBIDDEN,
+                ErrorCode.ACCESS_DENIED,
+                ex.getMessage(),
+                null
+        );
+    }
 }

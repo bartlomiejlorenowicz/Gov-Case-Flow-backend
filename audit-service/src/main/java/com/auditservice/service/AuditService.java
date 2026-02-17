@@ -3,8 +3,11 @@ package com.auditservice.service;
 import com.auditservice.config.AuditConstants;
 import com.auditservice.domain.*;
 import com.auditservice.dto.response.AuditEntryDto;
+import com.auditservice.events.UserPromotedEvent;
+import com.auditservice.events.UserRegisteredEvent;
 import com.auditservice.mapper.AuditEntryMapper;
 import com.auditservice.repository.AuditRepository;
+import com.govcaseflow.events.cases.CaseStatus;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +15,7 @@ import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -90,6 +94,50 @@ public class AuditService {
         }
         return repository.findAllBySeverity(severity, pageable)
                 .map(mapper::toDto);
+    }
+
+    @Transactional
+    public void saveUserRegistered(UserRegisteredEvent event) {
+
+        AuditEntry entry = AuditEntry.builder()
+                .caseId(UUID.randomUUID())
+                .oldStatus(CaseStatus.UNKNOWN)
+                .newStatus(CaseStatus.UNKNOWN)
+                .changedAt(event.registeredAt())
+                .changedBy(event.email())
+
+                .eventType(AuditEventType.USER_REGISTERED)
+                .severity(AuditSeverity.INFO)
+                .sourceService("auth-service")
+                .actorUserId(event.userId().toString())
+                .targetType(AuditTargetType.USER)
+                .targetId(event.userId().toString())
+                .traceId("N/A")
+                .build();
+
+        repository.save(entry);
+    }
+
+    @Transactional
+    public void saveUserPromoted(UserPromotedEvent event) {
+
+        AuditEntry entry = AuditEntry.builder()
+                .caseId(UUID.randomUUID())
+                .oldStatus(CaseStatus.UNKNOWN)
+                .newStatus(CaseStatus.UNKNOWN)
+                .changedAt(event.occurredAt())
+                .changedBy(event.actorId().toString())
+
+                .eventType(AuditEventType.USER_PROMOTED)
+                .severity(AuditSeverity.MEDIUM)
+                .sourceService("auth-service")
+                .actorUserId(event.actorId().toString())
+                .targetType(AuditTargetType.USER)
+                .targetId(event.targetUserId().toString())
+                .traceId("N/A")
+                .build();
+
+        repository.save(entry);
     }
 
     private AuditSeverity classifySeverity(CaseStatusChangedEvent event) {

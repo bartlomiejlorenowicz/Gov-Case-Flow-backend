@@ -113,8 +113,6 @@ public class CaseService {
         return mapper.toDto(caseEntity);
     }
 
-
-
     @Transactional(readOnly = true)
     public Page<CaseEntityDto> getAssignedToMe(UUID officerId, Pageable pageable) {
         return caseRepository.findAllByAssignedOfficerId(officerId, pageable)

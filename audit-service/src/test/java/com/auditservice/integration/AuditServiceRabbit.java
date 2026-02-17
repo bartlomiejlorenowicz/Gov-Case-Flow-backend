@@ -1,6 +1,6 @@
 package com.auditservice.integration;
 
-import com.auditservice.config.AuditAmqpConfig;
+import com.auditservice.config.AuditAmqpCaseStatusConfig;
 import com.govcaseflow.events.cases.CaseStatus;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.auditservice.repository.AuditRepository;
@@ -69,8 +69,8 @@ class AuditServiceRabbitIT {
 
         // when
         rabbitTemplate.convertAndSend(
-                AuditAmqpConfig.EXCHANGE,
-                AuditAmqpConfig.ROUTING_KEY,
+                AuditAmqpCaseStatusConfig.EXCHANGE,
+                AuditAmqpCaseStatusConfig.ROUTING_KEY,
                 event
         );
 

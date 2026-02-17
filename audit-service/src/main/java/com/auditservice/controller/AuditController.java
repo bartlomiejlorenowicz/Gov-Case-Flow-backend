@@ -63,5 +63,4 @@ public class AuditController {
     ) {
         return service.getAllFiltered(severity, pageable);
     }
-
 }

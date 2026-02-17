@@ -13,6 +13,7 @@ public class AuthAmqpConfig {
 
     public static final String EXCHANGE = "auth.events.exchange";
     public static final String ROUTING_KEY = "auth.user.registered";
+    public static final String USER_PROMOTED_ROUTING_KEY = "auth.user.promoted";
 
     @Bean
     public TopicExchange authExchange() {

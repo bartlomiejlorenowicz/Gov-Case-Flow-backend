@@ -7,5 +7,5 @@ public enum CaseStatus {
     DECISION_PENDING,
     APPROVED,
     REJECTED,
-    CLOSED
+    UNKNOWN, CLOSED
 }

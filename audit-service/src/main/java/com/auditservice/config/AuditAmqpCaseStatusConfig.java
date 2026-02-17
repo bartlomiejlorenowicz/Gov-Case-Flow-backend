@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class AuditAmqpConfig {
+public class AuditAmqpCaseStatusConfig {
 
     public static final String EXCHANGE = "case.events.exchange";
     public static final String QUEUE = "audit.case-status.queue";
