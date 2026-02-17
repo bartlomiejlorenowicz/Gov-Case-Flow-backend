@@ -1,13 +1,14 @@
-package com.authservice.service;
+package com.authservice.controller;
 
 
-import com.authservice.controller.AuthController;
 import com.authservice.dto.request.LoginRequest;
 import com.authservice.dto.request.LogoutRequest;
 import com.authservice.dto.request.RefreshTokenRequest;
 import com.authservice.dto.request.RegisterRequest;
 import com.authservice.dto.response.AuthResponse;
 import com.authservice.security.JwtService;
+import com.authservice.service.AuthService;
+import com.authservice.service.RefreshTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

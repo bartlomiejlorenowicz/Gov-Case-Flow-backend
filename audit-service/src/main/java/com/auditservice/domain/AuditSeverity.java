@@ -4,5 +4,5 @@ public enum AuditSeverity {
     LOW,
     MEDIUM,
     HIGH,
-    CRITICAL
+    INFO, CRITICAL
 }

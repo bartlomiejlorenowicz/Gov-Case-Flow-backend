@@ -1,6 +1,6 @@
 package com.auditservice.listener;
 
-import com.auditservice.config.AuditAmqpConfig;
+import com.auditservice.config.AuditAmqpCaseStatusConfig;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.auditservice.service.AuditService;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ public class CaseStatusChangedListener {
 
     private final AuditService auditService;
 
-    @RabbitListener(queues = AuditAmqpConfig.QUEUE)
+    @RabbitListener(queues = AuditAmqpCaseStatusConfig.QUEUE)
     public void handle(CaseStatusChangedEvent event) {
         log.info("Received CaseStatusChangedEvent: {}", event);
         auditService.save(event);
