@@ -3,6 +3,7 @@ package com.auditservice.service;
 import com.auditservice.config.AuditConstants;
 import com.auditservice.domain.*;
 import com.auditservice.dto.response.AuditEntryDto;
+import com.auditservice.events.AccountLockedEvent;
 import com.auditservice.events.UserPromotedEvent;
 import com.auditservice.events.UserRegisteredEvent;
 import com.auditservice.mapper.AuditEntryMapper;
@@ -134,6 +135,28 @@ public class AuditService {
                 .actorUserId(event.actorId().toString())
                 .targetType(AuditTargetType.USER)
                 .targetId(event.targetUserId().toString())
+                .traceId("N/A")
+                .build();
+
+        repository.save(entry);
+    }
+
+    @Transactional
+    public void saveAccountLocked(AccountLockedEvent event) {
+
+        AuditEntry entry = AuditEntry.builder()
+                .caseId(UUID.randomUUID())
+                .oldStatus(CaseStatus.UNKNOWN)
+                .newStatus(CaseStatus.UNKNOWN)
+                .changedAt(event.lockUntil())
+                .changedBy("SYSTEM")
+
+                .eventType(AuditEventType.ACCOUNT_LOCKED)
+                .severity(AuditSeverity.HIGH)
+                .sourceService("auth-service")
+                .actorUserId(event.userId().toString())
+                .targetType(AuditTargetType.USER)
+                .targetId(event.userId().toString())
                 .traceId("N/A")
                 .build();
 

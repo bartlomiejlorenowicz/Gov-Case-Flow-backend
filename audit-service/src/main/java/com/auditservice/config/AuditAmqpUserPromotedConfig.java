@@ -18,11 +18,6 @@ public class AuditAmqpUserPromotedConfig {
     }
 
     @Bean
-    public TopicExchange authExchange() {
-        return new TopicExchange(EXCHANGE);
-    }
-
-    @Bean
     public Binding userPromotedBinding(
             @Qualifier("userPromotedQueue") Queue queue,
             @Qualifier("authExchange") TopicExchange exchange
