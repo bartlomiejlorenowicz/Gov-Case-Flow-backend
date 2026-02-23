@@ -9,6 +9,7 @@ import com.authservice.dto.request.RegisterRequest;
 import com.authservice.dto.response.AuthResponse;
 import com.authservice.event.UserPromotedEvent;
 import com.authservice.event.UserRegisteredEvent;
+import com.authservice.exception.AccountLockedException;
 import com.authservice.exception.InvalidCredentialsException;
 import com.authservice.exception.UserAlreadyExistsException;
 import com.authservice.mapper.UserMapper;
@@ -73,12 +74,16 @@ public class AuthService {
         User user = userRepository.findByUsernameIgnoreCase(request.email().trim().toLowerCase())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
+        checkAccountLock(user);
+
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            handleFailedLogin(user);
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
-        String accessToken = jwtService.generateAccessToken(user);
+        resetLoginFailures(user);
 
+        String accessToken = jwtService.generateAccessToken(user);
         RefreshToken refreshToken = refreshTokenService.createForUser(user);
 
         return new AuthResponse(accessToken, refreshToken.getToken());
@@ -130,5 +135,31 @@ public class AuthService {
 
     public long countUsers() {
         return userRepository.count();
+    }
+
+    private void checkAccountLock(User user) {
+        if (user.getLockUntil() != null && user.getLockUntil().isAfter(Instant.now(clock))) {
+            throw new AccountLockedException("User account is locked");
+        }
+    }
+
+    private void resetLoginFailures(User user) {
+        if (user.getFailedLoginAttempts() > 0 || user.getLockUntil() != null) {
+            user.setFailedLoginAttempts(0);
+            user.setLockUntil(null);
+            userRepository.save(user);
+        }
+    }
+
+    private void handleFailedLogin(User user) {
+        int attempts = user.getFailedLoginAttempts() + 1;
+        user.setFailedLoginAttempts(attempts);
+
+        if (attempts >= 5) {
+            user.setLockUntil(Instant.now(clock).plusSeconds(15 * 60));
+            user.setFailedLoginAttempts(0);
+        }
+
+        userRepository.save(user);
     }
 }

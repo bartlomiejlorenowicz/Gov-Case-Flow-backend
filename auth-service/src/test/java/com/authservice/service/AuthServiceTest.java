@@ -6,6 +6,7 @@ import com.authservice.dto.request.LoginRequest;
 import com.authservice.dto.request.RegisterRequest;
 import com.authservice.event.UserPromotedEvent;
 import com.authservice.event.UserRegisteredEvent;
+import com.authservice.exception.AccountLockedException;
 import com.authservice.exception.InvalidCredentialsException;
 import com.authservice.exception.UserAlreadyExistsException;
 import com.authservice.mapper.UserMapper;
@@ -141,5 +142,51 @@ public class AuthServiceTest {
         assertThat(user.getRoles()).contains(Role.OFFICER);
 
         verify(eventPublisher).publishEvent(any(UserPromotedEvent.class));
+    }
+
+    @Test
+    void shouldThrowAccountLockedExceptionWhenAccountIsLocked() {
+        LoginRequest request = new LoginRequest("test@test.com", "Pass123!");
+
+        Instant lockUntil = Instant.now(clock).plusSeconds(600);
+
+        User user = User.builder()
+                .username("test@test.com")
+                .passwordHash("hashed")
+                .lockUntil(lockUntil)
+                .build();
+
+        when(userRepository.findByUsernameIgnoreCase(any()))
+                .thenReturn(Optional.of(user));
+
+        assertThrows(AccountLockedException.class,
+                () -> authService.login(request));
+
+        verify(passwordEncoder, never()).matches(any(), any());
+        verify(jwtService, never()).generateAccessToken(any());
+    }
+
+    @Test
+    void shouldLockAccountAfterFiveFailedAttempts() {
+        LoginRequest request = new LoginRequest("test@test.com", "wrong");
+
+        User user = User.builder()
+                .username("test@test.com")
+                .passwordHash("hashed")
+                .failedLoginAttempts(4)
+                .build();
+
+        when(userRepository.findByUsernameIgnoreCase(any()))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(any(), any())).thenReturn(false);
+
+        assertThrows(InvalidCredentialsException.class,
+                () -> authService.login(request));
+
+        assertNotNull(user.getLockUntil());
+        assertEquals(0, user.getFailedLoginAttempts());
+
+        verify(userRepository).save(user);
     }
 }
