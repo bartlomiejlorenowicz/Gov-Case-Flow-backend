@@ -7,6 +7,7 @@ import com.authservice.dto.UserDto;
 import com.authservice.dto.request.LoginRequest;
 import com.authservice.dto.request.RegisterRequest;
 import com.authservice.dto.response.AuthResponse;
+import com.authservice.event.AccountLockedEvent;
 import com.authservice.event.UserPromotedEvent;
 import com.authservice.event.UserRegisteredEvent;
 import com.authservice.exception.AccountLockedException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +44,7 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
     private final CurrentUserProvider currentUserProvider;
     private final UserMapper userMapper;
+    private static final Duration ACCOUNT_LOCK_DURATION = Duration.ofMinutes(15);
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -53,7 +56,6 @@ public class AuthService {
         User user = User.builder()
                 .username(request.email().trim().toLowerCase())
                 .passwordHash(passwordEncoder.encode(request.password()))
-//                .roles(Set.of(Role.USER))
                 .roles(new HashSet<>(Set.of(Role.USER)))
                 .enabled(true)
                 .createdAt(Instant.now(clock))
@@ -156,10 +158,19 @@ public class AuthService {
         user.setFailedLoginAttempts(attempts);
 
         if (attempts >= 5) {
-            user.setLockUntil(Instant.now(clock).plusSeconds(15 * 60));
-            user.setFailedLoginAttempts(0);
-        }
+            Instant lockUntil = Instant.now(clock).plus(ACCOUNT_LOCK_DURATION);
 
+            user.setLockUntil(lockUntil);
+            user.setFailedLoginAttempts(0);
+
+            eventPublisher.publishEvent(
+                    new AccountLockedEvent(
+                            user.getId(),
+                            lockUntil,
+                            "BRUTE_FORCE"
+                    )
+            );
+        }
         userRepository.save(user);
     }
 }

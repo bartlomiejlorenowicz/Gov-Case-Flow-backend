@@ -6,4 +6,5 @@ public interface AuthEventPublisher {
 
     void publishUserPromoted(UserPromotedEvent event);
 
+    void publishAccountLocked(AccountLockedEvent event);
 }

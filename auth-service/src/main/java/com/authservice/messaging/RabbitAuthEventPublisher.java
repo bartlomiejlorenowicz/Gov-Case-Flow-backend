@@ -1,6 +1,7 @@
 package com.authservice.messaging;
 
 import com.authservice.config.AuthAmqpConfig;
+import com.authservice.event.AccountLockedEvent;
 import com.authservice.event.AuthEventPublisher;
 import com.authservice.event.UserPromotedEvent;
 import com.authservice.event.UserRegisteredEvent;
@@ -34,6 +35,17 @@ public class RabbitAuthEventPublisher implements AuthEventPublisher {
         rabbitTemplate.convertAndSend(
                 AuthAmqpConfig.EXCHANGE,
                 AuthAmqpConfig.USER_PROMOTED_ROUTING_KEY,
+                event
+        );
+    }
+
+    @Override
+    public void publishAccountLocked(AccountLockedEvent event) {
+        log.warn("Publishing AccountLockedEvent: {}", event);
+
+        rabbitTemplate.convertAndSend(
+                AuthAmqpConfig.EXCHANGE,
+                AuthAmqpConfig.ACCOUNT_LOCKED_ROUTING_KEY,
                 event
         );
     }
