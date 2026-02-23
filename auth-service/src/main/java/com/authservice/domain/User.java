@@ -41,4 +41,10 @@ public class User {
 
     @Column(nullable = false)
     private boolean enabled;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int failedLoginAttempts = 0;
+
+    private Instant lockUntil;
 }

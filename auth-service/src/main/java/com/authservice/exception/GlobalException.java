@@ -66,4 +66,15 @@ public class GlobalException extends BaseGlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountLocked(HttpServletRequest request,AccountLockedException ex) {
+        return buildResponse(
+                request,
+                HttpStatus.LOCKED,
+                ErrorCode.ACCOUNT_BLOCKED,
+                ex.getMessage(),
+                null
+        );
+    }
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="004-add-bruteforce-columns" author="bartek">
+
+        <!-- failed_login_attempts -->
+        <addColumn tableName="users">
+            <column name="failed_login_attempts"
+                    type="int"
+                    defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- lock_until -->
+        <addColumn tableName="users">
+            <column name="lock_until" type="timestamp"/>
+        </addColumn>
+
+    </changeSet>
+
+</databaseChangeLog>
