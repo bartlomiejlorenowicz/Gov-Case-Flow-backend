@@ -8,7 +8,6 @@ import com.govcaseflow.events.auth.UserRegisteredEvent;
 import com.auditservice.mapper.AuditEntryMapper;
 import com.auditservice.repository.AuditRepository;
 import com.govcaseflow.events.cases.AuditSourceService;
-import com.govcaseflow.events.cases.CaseStatus;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,13 +30,19 @@ public class AuditService {
     private final AuditRepository repository;
     private final AuditEntryMapper mapper;
 
+    @Transactional
     public void save(CaseStatusChangedEvent event) {
-        log.info("Saving audit entry for caseId={}, {} -> {}",
-                event.caseId(), event.oldStatus(), event.newStatus());
+        String traceId = currentTraceId();
 
-        String traceId = MDC.get("traceId");
+        if (repository.existsByTraceIdAndEventType(traceId, AuditEventType.CASE_STATUS_CHANGED)) {
+            log.warn("Duplicate audit ignored traceId={}", traceId);
+            return;
+        }
 
         AuditSeverity severity = classifySeverity(event);
+
+        log.info("audit.save caseId={} {}->{} severity={}",
+                event.caseId(), event.oldStatus(), event.newStatus(), severity);
 
         repository.save(
                 AuditEntry.builder()
@@ -53,40 +60,93 @@ public class AuditService {
                         .actorUserId(event.changedBy())
                         .targetType(AuditTargetType.CASE)
                         .targetId(event.caseId().toString())
-
                         .build()
         );
 
         if (severity == AuditSeverity.HIGH) {
-            log.error("HIGH severity audit event detected! caseId={}", event.caseId());
+            log.error("HIGH severity audit detected caseId={}", event.caseId());
         }
-
-        log.info("Audit entry saved successfully for caseId={}", event.caseId());
     }
 
+    @Transactional
+    public void saveUserRegistered(UserRegisteredEvent event) {
+        saveUserEvent(
+                AuditEventType.USER_REGISTERED,
+                AuditSeverity.INFO,
+                event.email(),
+                event.userId().toString(),
+                event.registeredAt()
+        );
+    }
+
+    @Transactional
+    public void saveUserPromoted(UserPromotedEvent event) {
+        saveUserEvent(
+                AuditEventType.USER_PROMOTED,
+                AuditSeverity.MEDIUM,
+                event.actorId().toString(),
+                event.targetUserId().toString(),
+                event.occurredAt()
+        );
+    }
+
+    @Transactional
+    public void saveAccountLocked(AccountLockedEvent event) {
+        saveUserEvent(
+                AuditEventType.ACCOUNT_LOCKED,
+                AuditSeverity.HIGH,
+                "SYSTEM",
+                event.userId().toString(),
+                event.lockUntil()
+        );
+    }
+
+    private void saveUserEvent(
+            AuditEventType type,
+            AuditSeverity severity,
+            String actor,
+            String target,
+            Instant timestamp
+    ) {
+        String traceId = currentTraceId();
+
+        if (repository.existsByTraceIdAndEventType(traceId, type)) {
+            log.warn("Duplicate audit ignored traceId={} type={}", traceId, type);
+            return;
+        }
+
+        repository.save(
+                AuditEntry.builder()
+                        .caseId(null)
+                        .oldStatus(null)
+                        .newStatus(null)
+                        .changedAt(timestamp)
+                        .changedBy(actor)
+                        .traceId(traceId)
+
+                        .eventType(type)
+                        .severity(severity)
+                        .sourceService(AuditSourceService.AUTH_SERVICE.value())
+                        .actorUserId(actor)
+                        .targetType(AuditTargetType.USER)
+                        .targetId(target)
+                        .build()
+        );
+    }
 
     public Page<AuditEntryDto> getByTraceId(String traceId, Pageable pageable) {
         return repository.findAllByTraceId(traceId, pageable)
                 .map(mapper::toDto);
     }
 
-    public Page<AuditEntryDto> getAll(Pageable pageable) {
-        return repository.findAll(pageable).map(mapper::toDto);
-    }
-
     public Page<AuditEntryDto> getByCaseId(UUID caseId, Pageable pageable) {
-        return repository.findAllByCaseId(caseId, pageable).map(mapper::toDto);
+        return repository.findAllByCaseId(caseId, pageable)
+                .map(mapper::toDto);
     }
 
     public Page<AuditEntryDto> getByUserId(String userId, Pageable pageable) {
         return repository.findAllByActorUserId(userId, pageable)
                 .map(mapper::toDto);
-    }
-
-    public List<EventStatsDto> getEventStats() {
-        return repository.countEventsByType().stream()
-                .map(r -> new EventStatsDto((String) r[0], (Long) r[1]))
-                .toList();
     }
 
     public Page<AuditEntryDto> getAllFiltered(AuditSeverity severity, Pageable pageable) {
@@ -97,77 +157,26 @@ public class AuditService {
                 .map(mapper::toDto);
     }
 
-    @Transactional
-    public void saveUserRegistered(UserRegisteredEvent event) {
+    public List<EventStatsDto> getEventStats() {
+        Instant now = Instant.now();
+        Instant from = now.minus(24, ChronoUnit.HOURS);
 
-        AuditEntry entry = AuditEntry.builder()
-                .caseId(UUID.randomUUID())
-                .oldStatus(CaseStatus.UNKNOWN)
-                .newStatus(CaseStatus.UNKNOWN)
-                .changedAt(event.registeredAt())
-                .changedBy(event.email())
-
-                .eventType(AuditEventType.USER_REGISTERED)
-                .severity(AuditSeverity.INFO)
-                .sourceService("auth-service")
-                .actorUserId(event.userId().toString())
-                .targetType(AuditTargetType.USER)
-                .targetId(event.userId().toString())
-                .traceId("N/A")
-                .build();
-
-        repository.save(entry);
+        return repository.countEventsBetween(from, now)
+                .stream()
+                .map(e -> new EventStatsDto(e.getEventType(), e.getCount()))
+                .toList();
     }
 
-    @Transactional
-    public void saveUserPromoted(UserPromotedEvent event) {
-
-        AuditEntry entry = AuditEntry.builder()
-                .caseId(UUID.randomUUID())
-                .oldStatus(CaseStatus.UNKNOWN)
-                .newStatus(CaseStatus.UNKNOWN)
-                .changedAt(event.occurredAt())
-                .changedBy(event.actorId().toString())
-
-                .eventType(AuditEventType.USER_PROMOTED)
-                .severity(AuditSeverity.MEDIUM)
-                .sourceService("auth-service")
-                .actorUserId(event.actorId().toString())
-                .targetType(AuditTargetType.USER)
-                .targetId(event.targetUserId().toString())
-                .traceId("N/A")
-                .build();
-
-        repository.save(entry);
-    }
-
-    @Transactional
-    public void saveAccountLocked(AccountLockedEvent event) {
-
-        AuditEntry entry = AuditEntry.builder()
-                .caseId(UUID.randomUUID())
-                .oldStatus(CaseStatus.UNKNOWN)
-                .newStatus(CaseStatus.UNKNOWN)
-                .changedAt(event.lockUntil())
-                .changedBy("SYSTEM")
-
-                .eventType(AuditEventType.ACCOUNT_LOCKED)
-                .severity(AuditSeverity.HIGH)
-                .sourceService("auth-service")
-                .actorUserId(event.userId().toString())
-                .targetType(AuditTargetType.USER)
-                .targetId(event.userId().toString())
-                .traceId("N/A")
-                .build();
-
-        repository.save(entry);
-    }
-
-    private AuditSeverity classifySeverity(CaseStatusChangedEvent event) {
+    private static AuditSeverity classifySeverity(CaseStatusChangedEvent event) {
         return switch (event.newStatus()) {
             case REJECTED -> AuditSeverity.HIGH;
             case APPROVED -> AuditSeverity.MEDIUM;
             default -> AuditSeverity.LOW;
         };
+    }
+
+    private String currentTraceId() {
+        String traceId = MDC.get("traceId");
+        return traceId != null ? traceId : UUID.randomUUID().toString();
     }
 }
