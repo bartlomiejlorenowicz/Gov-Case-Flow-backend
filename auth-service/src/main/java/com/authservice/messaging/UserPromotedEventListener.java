@@ -1,7 +1,7 @@
 package com.authservice.messaging;
 
 import com.authservice.event.AuthEventPublisher;
-import com.authservice.event.UserPromotedEvent;
+import com.govcaseflow.events.auth.UserPromotedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

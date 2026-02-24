@@ -1,13 +1,13 @@
 package com.auditservice.service;
 
-import com.auditservice.config.AuditConstants;
 import com.auditservice.domain.*;
 import com.auditservice.dto.response.AuditEntryDto;
-import com.auditservice.events.AccountLockedEvent;
-import com.auditservice.events.UserPromotedEvent;
-import com.auditservice.events.UserRegisteredEvent;
+import com.govcaseflow.events.auth.UserPromotedEvent;
+import com.govcaseflow.events.auth.AccountLockedEvent;
+import com.govcaseflow.events.auth.UserRegisteredEvent;
 import com.auditservice.mapper.AuditEntryMapper;
 import com.auditservice.repository.AuditRepository;
+import com.govcaseflow.events.cases.AuditSourceService;
 import com.govcaseflow.events.cases.CaseStatus;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class AuditService {
 
                         .severity(severity)
                         .eventType(AuditEventType.CASE_STATUS_CHANGED)
-                        .sourceService(AuditConstants.SOURCE_CASE_SERVICE)
+                        .sourceService(AuditSourceService.CASE_SERVICE.value())
                         .actorUserId(event.changedBy())
                         .targetType(AuditTargetType.CASE)
                         .targetId(event.caseId().toString())

@@ -2,9 +2,9 @@ package com.authservice.integration;
 
 import com.authservice.config.AuthAmqpConfig;
 import com.authservice.dto.request.RegisterRequest;
-import com.authservice.event.UserRegisteredEvent;
 import com.authservice.repository.UserRepository;
 import com.authservice.service.AuthService;
+import com.govcaseflow.events.auth.UserRegisteredEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.Binding;

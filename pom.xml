@@ -41,12 +41,6 @@
 
             <dependency>
                 <groupId>com</groupId>
-                <artifactId>gov-case-flow-events</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com</groupId>
                 <artifactId>gov-case-flow-tracing</artifactId>
                 <version>${project.version}</version>
             </dependency>

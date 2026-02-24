@@ -21,7 +21,7 @@ class CaseStatusChangedListenerTest {
     AuditService auditService;
 
     @InjectMocks
-    CaseStatusChangedListener listener;
+    CaseStatusChangedEventListener listener;
 
     @Test
     void shouldDelegateEventToAuditService() {
@@ -33,7 +33,7 @@ class CaseStatusChangedListenerTest {
                 "SYSTEM"
         );
 
-        listener.handle(event);
+        listener.handle(event, null);
 
         verify(auditService).save(event);
     }
