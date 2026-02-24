@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RabbitCaseEventPublisher implements CaseEventPublisher {
 
-    private final RabbitTemplate rabbitTemplate;
+    private final @Qualifier("caseRabbitTemplate") RabbitTemplate rabbitTemplate;
 
     @Override
     public void publishStatusChanged(CaseStatusChangedEvent event) {
@@ -26,16 +27,17 @@ public class RabbitCaseEventPublisher implements CaseEventPublisher {
             traceId = UUID.randomUUID().toString();
         }
 
-        log.info("Publishing CaseStatusChangedEvent: {} with traceId={}", event, traceId);
+        log.info("Publishing CaseStatusChangedEvent: {} traceId={}", event, traceId);
 
         String finalTraceId = traceId;
 
         rabbitTemplate.convertAndSend(
                 CaseAmqpConfig.EXCHANGE,
-                CaseAmqpConfig.ROUTING_KEY,
+                CaseAmqpConfig.STATUS_CHANGED_KEY, // ✅ fix
                 event,
                 message -> {
-                    message.getMessageProperties().setMessageId(UUID.randomUUID().toString());
+                    message.getMessageProperties()
+                            .setMessageId(UUID.randomUUID().toString());
 
                     message.getMessageProperties()
                             .setHeader(TraceConstants.TRACE_ID_HEADER, finalTraceId);

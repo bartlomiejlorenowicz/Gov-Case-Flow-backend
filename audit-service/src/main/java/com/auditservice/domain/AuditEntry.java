@@ -19,7 +19,7 @@ public class AuditEntry {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private UUID caseId;
 
     @Enumerated(EnumType.STRING)

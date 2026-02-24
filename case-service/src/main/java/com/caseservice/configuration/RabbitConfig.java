@@ -18,16 +18,24 @@ public class RabbitConfig {
                 .addModule(new JavaTimeModule())
                 .build();
 
-        return new Jackson2JsonMessageConverter(mapper);
+        var converter = new Jackson2JsonMessageConverter(mapper);
+
+        var classMapper = new org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper();
+        classMapper.setTrustedPackages("com.govcaseflow.events");
+
+        converter.setClassMapper(classMapper);
+
+        return converter;
     }
 
-    @Bean
+    @Bean(name = "caseRabbitTemplate")
     public RabbitTemplate rabbitTemplate(
             ConnectionFactory connectionFactory,
             Jackson2JsonMessageConverter messageConverter
     ) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
+        template.setMandatory(true);
         return template;
     }
 }

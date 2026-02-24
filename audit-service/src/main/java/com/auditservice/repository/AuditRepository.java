@@ -1,6 +1,7 @@
 package com.auditservice.repository;
 
 import com.auditservice.domain.AuditEntry;
+import com.auditservice.domain.AuditEventType;
 import com.auditservice.domain.AuditSeverity;
 import com.auditservice.domain.EventStats;
 import org.springframework.data.domain.Page;
@@ -28,13 +29,8 @@ public interface AuditRepository extends JpaRepository<AuditEntry, UUID> {
             """)
     List<EventStats> countEventsBetween(Instant from, Instant to);
 
-    @Query("""
-            SELECT e.eventType, COUNT(e)
-            FROM AuditEntry e
-            GROUP BY e.eventType
-            """)
-    List<Object[]> countEventsByType();
-
     Page<AuditEntry> findAllBySeverity(AuditSeverity severity, Pageable pageable);
+
+    boolean existsByTraceIdAndEventType(String traceId, AuditEventType type);
 
 }

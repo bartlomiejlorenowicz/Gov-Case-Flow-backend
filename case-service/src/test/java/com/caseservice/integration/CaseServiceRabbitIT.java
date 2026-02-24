@@ -34,7 +34,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CaseServiceRabbitIT {
 
     private static final String EXCHANGE = CaseAmqpConfig.EXCHANGE;
-    private static final String ROUTING_KEY = CaseAmqpConfig.ROUTING_KEY;
+    private static final String ROUTING_KEY = CaseAmqpConfig.STATUS_CHANGED_KEY;
     private static final String TEST_QUEUE = "test.case.events.queue";
 
     @Container
