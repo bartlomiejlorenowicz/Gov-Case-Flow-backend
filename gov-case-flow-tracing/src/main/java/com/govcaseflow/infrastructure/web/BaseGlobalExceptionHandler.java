@@ -16,12 +16,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.time.Instant;
 import java.util.List;
 
-import static com.govcaseflow.infrastructure.tracing.TraceConstants.TRACE_ID_MDC_KEY;
+import static com.govcaseflow.infrastructure.tracing.CorrelationId.MDC_KEY;
 
 public abstract class BaseGlobalExceptionHandler
         extends ResponseEntityExceptionHandler {
 
-//    private final String TRACE_ID_MDC_KEY = "traceId";
     private final String VALIDATION_FAILED = "Validation failed";
     private final String UNEXPECTED_ERROR = "Unexpected error occurred";
 
@@ -99,7 +98,7 @@ public abstract class BaseGlobalExceptionHandler
                 errorCode,
                 message,
                 request.getRequestURI(),
-                MDC.get(TRACE_ID_MDC_KEY),
+                MDC.get(MDC_KEY),
                 fieldErrors
         );
 
@@ -119,7 +118,7 @@ public abstract class BaseGlobalExceptionHandler
                 errorCode,
                 message,
                 request.getRequestURI(),
-                MDC.get(TRACE_ID_MDC_KEY),
+                MDC.get(MDC_KEY),
                 fieldErrors
         );
     }

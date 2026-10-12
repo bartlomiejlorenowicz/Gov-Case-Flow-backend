@@ -3,10 +3,8 @@ package com.caseservice.messaging;
 import com.caseservice.configuration.CaseAmqpConfig;
 import com.caseservice.event.CaseEventPublisher;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
-import com.govcaseflow.infrastructure.tracing.TraceConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -22,26 +20,16 @@ public class RabbitCaseEventPublisher implements CaseEventPublisher {
 
     @Override
     public void publishStatusChanged(CaseStatusChangedEvent event) {
-        String traceId = MDC.get(TraceConstants.TRACE_ID_MDC_KEY);
-        if (traceId == null || traceId.isBlank()) {
-            traceId = UUID.randomUUID().toString();
-        }
+        log.info("Publishing CaseStatusChangedEvent: {}", event);
 
-        log.info("Publishing CaseStatusChangedEvent: {} traceId={}", event, traceId);
-
-        String finalTraceId = traceId;
-
+        // correlationId is set by CorrelationIdMessagePostProcessor on caseRabbitTemplate
         rabbitTemplate.convertAndSend(
                 CaseAmqpConfig.EXCHANGE,
-                CaseAmqpConfig.STATUS_CHANGED_KEY, // ✅ fix
+                CaseAmqpConfig.STATUS_CHANGED_KEY,
                 event,
                 message -> {
                     message.getMessageProperties()
                             .setMessageId(UUID.randomUUID().toString());
-
-                    message.getMessageProperties()
-                            .setHeader(TraceConstants.TRACE_ID_HEADER, finalTraceId);
-
                     return message;
                 }
         );

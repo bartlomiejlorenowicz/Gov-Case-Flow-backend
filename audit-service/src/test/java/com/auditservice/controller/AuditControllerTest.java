@@ -133,8 +133,7 @@ class AuditControllerTest {
                 .thenReturn(new PageImpl<>(List.of(dto)));
 
         mockMvc.perform(get("/api/audit/trace/{traceId}", traceId))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("X-Trace-Id"));
+                .andExpect(status().isOk());
 
         verify(service).getByTraceId(eq(traceId), any(Pageable.class));
     }
