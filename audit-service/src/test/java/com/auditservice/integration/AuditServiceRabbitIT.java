@@ -4,11 +4,17 @@ import com.auditservice.config.AuditAmqpCaseStatusConfig;
 import com.govcaseflow.events.cases.CaseStatus;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import com.auditservice.repository.AuditRepository;
+import com.govcaseflow.infrastructure.tracing.CorrelationId;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -26,6 +32,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")
+@ExtendWith(OutputCaptureExtension.class)
 class AuditServiceRabbitIT {
 
     @Container
@@ -55,6 +62,11 @@ class AuditServiceRabbitIT {
     @Autowired
     private AuditRepository auditRepository;
 
+    @BeforeEach
+    void cleanAuditLog() {
+        auditRepository.deleteAll();
+    }
+
     @Test
     void shouldConsumeEventAndPersistAuditEntry() {
         // given
@@ -80,5 +92,45 @@ class AuditServiceRabbitIT {
                 .untilAsserted(() ->
                         assertThat(auditRepository.findAll()).hasSize(1)
                 );
+    }
+
+    /**
+     * Consumer half of SCRUM-7: case-service puts the X-Correlation-Id of the HTTP request
+     * into the AMQP "correlationId" property (covered by CaseServiceRabbitIT); here that
+     * property must end up in audit-service log lines and in the stored audit entry.
+     */
+    @Test
+    void shouldLogAndStoreCorrelationIdFromMessage(CapturedOutput output) {
+        String correlationId = UUID.randomUUID().toString();
+        CaseStatusChangedEvent event =
+                new CaseStatusChangedEvent(
+                        UUID.randomUUID(),
+                        CaseStatus.SUBMITTED,
+                        CaseStatus.IN_REVIEW,
+                        Instant.now(),
+                        "TEST"
+                );
+
+        rabbitTemplate.convertAndSend(
+                AuditAmqpCaseStatusConfig.EXCHANGE,
+                AuditAmqpCaseStatusConfig.ROUTING_KEY,
+                event,
+                message -> {
+                    message.getMessageProperties().setCorrelationId(correlationId);
+                    return message;
+                }
+        );
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() ->
+                        assertThat(auditRepository.findAllByTraceId(correlationId, Pageable.unpaged()))
+                                .hasSize(1)
+                );
+
+        assertThat(output.getOut().lines()
+                .filter(line -> line.contains("Received CaseStatusChangedEvent") || line.contains("audit.save")))
+                .hasSize(2)
+                .allSatisfy(line -> assertThat(line).contains("[" + correlationId + "]"));
     }
 }
