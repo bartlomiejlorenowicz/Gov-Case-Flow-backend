@@ -33,7 +33,7 @@ class CaseStatusChangedListenerTest {
                 "SYSTEM"
         );
 
-        listener.handle(event, null);
+        listener.handle(event);
 
         verify(auditService).save(event);
     }

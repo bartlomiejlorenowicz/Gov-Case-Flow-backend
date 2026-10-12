@@ -9,6 +9,7 @@ import com.auditservice.mapper.AuditEntryMapper;
 import com.auditservice.repository.AuditRepository;
 import com.govcaseflow.events.cases.AuditSourceService;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
+import com.govcaseflow.infrastructure.tracing.CorrelationId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -176,7 +177,6 @@ public class AuditService {
     }
 
     private String currentTraceId() {
-        String traceId = MDC.get("traceId");
-        return traceId != null ? traceId : UUID.randomUUID().toString();
+        return CorrelationId.resolve(MDC.get(CorrelationId.MDC_KEY));
     }
 }

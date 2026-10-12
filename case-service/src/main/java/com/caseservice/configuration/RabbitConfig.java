@@ -3,6 +3,7 @@ package com.caseservice.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.govcaseflow.infrastructure.tracing.CorrelationIdMessagePostProcessor;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -31,11 +32,13 @@ public class RabbitConfig {
     @Bean(name = "caseRabbitTemplate")
     public RabbitTemplate rabbitTemplate(
             ConnectionFactory connectionFactory,
-            Jackson2JsonMessageConverter messageConverter
+            Jackson2JsonMessageConverter messageConverter,
+            CorrelationIdMessagePostProcessor correlationIdMessagePostProcessor
     ) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
         template.setMandatory(true);
+        template.addBeforePublishPostProcessors(correlationIdMessagePostProcessor);
         return template;
     }
 }

@@ -1,0 +1,2 @@
+com.govcaseflow.infrastructure.config.CorrelationIdWebAutoConfiguration
+com.govcaseflow.infrastructure.config.CorrelationIdAmqpAutoConfiguration

@@ -6,6 +6,7 @@ import com.caseservice.domain.CaseEntity;
 import com.caseservice.repository.CaseRepository;
 import com.caseservice.repository.CaseStatusHistoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.govcaseflow.infrastructure.tracing.CorrelationId;
 import com.govcaseflow.events.cases.CaseStatusChangedEvent;
 import io.jsonwebtoken.Jwts;
 import org.awaitility.Awaitility;
@@ -25,6 +26,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -34,10 +37,13 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
@@ -169,5 +175,79 @@ class CaseServiceRabbitIT {
                     assertThat(event.newStatus()).isEqualTo(com.govcaseflow.events.cases.CaseStatus.IN_REVIEW);
                     assertThat(event.changedBy()).isNotBlank();
                 });
+    }
+
+    @Test
+    void shouldPropagateIncomingCorrelationIdToAmqpMessage() throws Exception {
+        String correlationId = UUID.randomUUID().toString();
+
+        changeStatusOfNewCase()
+                .header(CorrelationId.HEADER, correlationId)
+                .perform()
+                .andExpect(status().isNoContent())
+                .andExpect(header().string(CorrelationId.HEADER, correlationId));
+
+        assertThat(receiveStatusChangedMessage().getMessageProperties().getCorrelationId())
+                .isEqualTo(correlationId);
+    }
+
+    @Test
+    void shouldGenerateCorrelationIdWhenRequestHasNone() throws Exception {
+        String returnedId = changeStatusOfNewCase()
+                .perform()
+                .andExpect(status().isNoContent())
+                .andReturn().getResponse().getHeader(CorrelationId.HEADER);
+
+        assertThat(CorrelationId.isValid(returnedId)).isTrue();
+        assertThat(receiveStatusChangedMessage().getMessageProperties().getCorrelationId())
+                .isEqualTo(returnedId);
+    }
+
+    private StatusChangeRequest changeStatusOfNewCase() {
+        UUID userId = UUID.randomUUID();
+        CaseEntity entity = caseRepository.save(
+                CaseEntity.builder()
+                        .caseNumber("CASE-2026-IT-002")
+                        .applicantPesel("90010112345")
+                        .status(CaseStatus.SUBMITTED)
+                        .createdByUserId(userId)
+                        .build()
+        );
+
+        return new StatusChangeRequest(
+                patch("/api/officer/cases/{caseId}/status", entity.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(csrf())
+                        .header("Authorization", "Bearer " + jwtFactory.token(userId, "test@test.com", List.of("ADMIN")))
+                        .content("{ \"newStatus\": \"IN_REVIEW\" }")
+        );
+    }
+
+    private Message receiveStatusChangedMessage() {
+        AtomicReference<Message> received = new AtomicReference<>();
+        Awaitility.await()
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    received.set(rabbitTemplate.receive(TEST_QUEUE));
+                    assertThat(received.get()).isNotNull();
+                });
+        return received.get();
+    }
+
+    private class StatusChangeRequest {
+        private final MockHttpServletRequestBuilder builder;
+
+        StatusChangeRequest(MockHttpServletRequestBuilder builder) {
+            this.builder = builder;
+        }
+
+        StatusChangeRequest header(String name, String value) {
+            builder.header(name, value);
+            return this;
+        }
+
+        ResultActions perform() throws Exception {
+            return mockMvc.perform(builder);
+        }
     }
 }
