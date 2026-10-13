@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": ["Bash(git push -u origin feature/*)"],
+    "deny": [
+      "Bash(git push:*origin main*)",
+      "Bash(git push --force:*)",
+      "Read(./.env)",
+      "Read(./**/.env)",
+      "Read(./ansible/group_vars/vault.yml)"
+    ]
+  }
+}
